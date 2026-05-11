@@ -1,0 +1,944 @@
+<html>
+        <head><title>Downloaded HTML</title></head>
+        <body>
+            <pre style="white-space: pre-wrap; word-wrap: break-word;"><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mine A Zain ⛏️</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --border:#3a2510;--border-hi:#7a5020;
+  --gold:#f5c842;--gold2:#c08020;
+  --text:#e8d5b7;--dim:#8a6840;--purple:#c080ff;
+}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#060402}
+::-webkit-scrollbar-thumb{background:#5a3a10;border-radius:3px}
+body{
+  background:#080604;color:var(--text);
+  font-family:'Rajdhani',Tahoma,sans-serif;
+  height:100vh;display:flex;flex-direction:column;
+  overflow:hidden;user-select:none;
+}
+
+/* ── TOP BAR ─────────────────────────── */
+#bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 16px;gap:12px;z-index:20;flex-shrink:0;
+  background:linear-gradient(180deg,#201408 0%,#110c05 100%);
+  border-bottom:2px solid var(--border-hi);
+  box-shadow:0 3px 20px rgba(0,0,0,.8);
+}
+.gtitle{
+  font-family:'Black Ops One',sans-serif;
+  font-size:18px;letter-spacing:3px;color:var(--gold);
+  text-shadow:0 0 12px var(--gold2),0 0 30px #804010;white-space:nowrap;
+}
+.mwrap{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(200,160,0,.1);
+  border:1px solid rgba(220,170,0,.25);
+  border-radius:8px;padding:5px 13px;
+}
+.mwrap .ico{font-size:20px}
+#moneyAmt{
+  font-size:22px;font-weight:700;color:#ffd700;
+  text-shadow:0 0 8px #c09010;min-width:80px;
+  font-family:'Rajdhani',sans-serif;
+}
+.pbwrap{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  flex:1;max-width:280px;
+}
+.pmults{display:flex;gap:8px;font-size:11px;color:var(--purple)}
+.mtag{
+  background:rgba(100,50,180,.25);border:1px solid #6030b0;
+  border-radius:4px;padding:1px 7px;
+}
+.ptrack{
+  width:100%;height:7px;background:#140e06;
+  border:1px solid #3a2510;border-radius:4px;overflow:hidden;
+}
+#pFill{
+  height:100%;
+  background:linear-gradient(90deg,#5010a0,#c060ff);
+  border-radius:4px;transition:width .4s;width:0%;
+}
+#pReqTxt{font-size:10px;color:#6a5040}
+#pBtn{
+  background:linear-gradient(135deg,#5a1a8a,#380860);
+  color:#d0a0ff;border:1px solid #8040c0;
+  padding:7px 14px;border-radius:7px;cursor:pointer;
+  font-size:13px;font-weight:700;white-space:nowrap;
+  transition:all .2s;text-shadow:0 0 8px #b060ff;
+  font-family:'Rajdhani',sans-serif;letter-spacing:1px;
+}
+#pBtn:hover:not(:disabled){
+  background:linear-gradient(135deg,#7a2aaa,#5010a0);
+  box-shadow:0 0 18px rgba(180,80,255,.5);transform:scale(1.04);
+}
+#pBtn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── MAIN ────────────────────────────── */
+#main{display:flex;flex:1;overflow:hidden;min-height:0}
+.panel{
+  width:215px;flex-shrink:0;
+  background:linear-gradient(180deg,#100c06,#0b0803);
+  padding:10px 9px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:7px;
+}
+#lp{border-right:2px solid var(--border)}
+#rp{border-left:2px solid var(--border)}
+.ptitle{
+  font-family:'Black Ops One',sans-serif;font-size:13px;
+  color:var(--gold);text-align:center;
+  padding-bottom:7px;border-bottom:1px solid var(--border);
+  text-shadow:0 0 8px var(--gold2);letter-spacing:1px;flex-shrink:0;
+}
+
+/* ── INVENTORY ───────────────────────── */
+.oreRow{
+  display:flex;align-items:center;gap:7px;padding:5px 6px;
+  border-radius:7px;background:rgba(255,255,255,.025);
+  border:1px solid transparent;transition:border-color .2s,background .2s;flex-shrink:0;
+}
+.oreRow:hover{border-color:var(--border);background:rgba(255,255,255,.04)}
+.oreRow img{width:34px;height:34px;object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.oreMeta{flex:1;min-width:0}
+.oreName{font-size:11px;color:var(--dim)}
+.oreQty{font-size:16px;font-weight:700;font-family:'Rajdhani',sans-serif}
+.sellBtn{
+  background:linear-gradient(135deg,#3a7a18,#236010);
+  color:#a0f060;border:1px solid #5aaa28;
+  border-radius:5px;padding:3px 6px;cursor:pointer;
+  font-size:9px;font-weight:700;text-align:center;
+  transition:all .15s;flex-shrink:0;line-height:1.5;
+  font-family:'Rajdhani',sans-serif;
+}
+.sellBtn:hover:not(:disabled){background:linear-gradient(135deg,#4a8a28,#336820);transform:scale(1.05)}
+.sellBtn:disabled{opacity:.3;cursor:not-allowed}
+.invFoot{flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+#sellAllBtn{
+  width:100%;background:linear-gradient(135deg,#7a5010,#4a3008);
+  color:var(--gold);border:1px solid #c08020;
+  padding:8px;border-radius:7px;cursor:pointer;
+  font-family:'Black Ops One',sans-serif;font-size:12px;letter-spacing:1px;transition:all .2s;
+}
+#sellAllBtn:hover{background:linear-gradient(135deg,#9a7020,#6a5010)}
+.invTotal{text-align:center;font-size:11px;color:var(--dim)}
+
+/* ── SHOP ────────────────────────────── */
+.shopStats{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;font-size:12px;color:var(--dim);
+  line-height:2.1;flex-shrink:0;
+}
+.shopStats strong{color:#e8d080}
+.upgCard{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:9px;padding:9px 10px;transition:border-color .2s;flex-shrink:0;
+}
+.upgCard:hover{border-color:#5a3a15}
+.upgName{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:2px;font-family:'Rajdhani',sans-serif}
+.upgDesc{font-size:10px;color:var(--dim);margin-bottom:4px}
+.upgLvl{font-size:11px;color:#c0a070;margin-bottom:5px}
+.upgRow{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.upgCost{font-size:11px;color:#ffd700}
+.buyBtn{
+  background:linear-gradient(135deg,#c07820,#8a5010);
+  color:#fff8e0;border:1px solid #e0a030;
+  padding:4px 10px;border-radius:5px;cursor:pointer;
+  font-size:11px;font-weight:700;transition:all .15s;white-space:nowrap;
+  font-family:'Rajdhani',sans-serif;
+}
+.buyBtn:hover:not(:disabled){background:linear-gradient(135deg,#e09830,#aa6820);transform:scale(1.05)}
+.buyBtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.pHint{
+  background:rgba(100,50,180,.1);border:1px solid #5030a0;
+  border-radius:8px;padding:9px 10px;font-size:10px;
+  color:#b090d0;line-height:1.9;flex-shrink:0;
+}
+.pHint b{color:#d0b0ff}
+
+/* ── CAVE ────────────────────────────── */
+#cave{
+  flex:1;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 55%,#161008 0%,#060402 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:0;
+}
+#ceiling{
+  position:absolute;top:0;left:0;right:0;height:70px;
+  pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,#201408 0%,transparent 100%);
+}
+#stalactites{
+  position:absolute;top:0;left:0;right:0;height:80px;
+  pointer-events:none;z-index:2;
+}
+.stlct{
+  position:absolute;top:0;
+  background:linear-gradient(180deg,#1e1208,#100a04);
+  border-radius:0 0 45% 45%;
+}
+#gnd{
+  position:absolute;bottom:0;left:0;right:0;
+  height:60px;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,#2c1c0c 0%,#130a03 100%);
+  border-top:3px solid #5a3a10;
+}
+#gnd::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,#c08030 30%,#e0a040 50%,#c08030 70%,transparent);
+}
+
+/* ── SCENE ───────────────────────────── */
+#scene{
+  position:relative;display:flex;
+  align-items:flex-end;justify-content:center;
+  gap:20px;z-index:5;margin-bottom:32px;
+}
+
+/* Rock — LEFT side */
+#rWrap{
+  position:relative;width:148px;height:148px;
+  display:flex;align-items:flex-end;justify-content:center;flex-shrink:0;
+}
+#rWrap.shake{animation:rShake .2s ease-out}
+@keyframes rShake{
+  0%  {transform:translate(0,0) rotate(0)}
+  20% {transform:translate(-5px,2px) rotate(-1.5deg)}
+  45% {transform:translate(5px,-2px) rotate(1.5deg)}
+  70% {transform:translate(-3px,1px) rotate(-.5deg)}
+  100%{transform:translate(0,0) rotate(0)}
+}
+#rImg{
+  max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.9));
+}
+
+/* HP bar */
+#hpBox{
+  position:absolute;top:-42px;left:50%;transform:translateX(-50%);
+  width:140px;text-align:center;
+}
+.hpLbl{font-size:10px;color:#b09070;margin-bottom:3px}
+.hpTrack{
+  width:100%;height:11px;background:#140e08;
+  border:1px solid #4a2808;border-radius:6px;overflow:hidden;
+}
+#hpFill{
+  height:100%;border-radius:6px;
+  transition:width .08s,background .3s;
+  background:linear-gradient(90deg,#28a028,#70f040);
+}
+#rName{
+  position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);
+  font-size:12px;font-weight:700;color:#e8c070;white-space:nowrap;
+  text-shadow:0 0 8px #c08020;font-family:'Rajdhani',sans-serif;
+}
+#rTier{
+  position:absolute;bottom:-43px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:600;white-space:nowrap;
+  font-family:'Rajdhani',sans-serif;text-transform:uppercase;letter-spacing:1px;
+}
+
+/* Miner — RIGHT side, facing left (scaleX flip) */
+#mWrap{
+  width:95px;height:120px;
+  transform-origin:50% 100%;flex-shrink:0;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.8));
+}
+#mWrap.swing{animation:mSwing .18s ease-out}
+/* Miner is on the RIGHT: swing toward the LEFT (negative X, negative rotate) */
+@keyframes mSwing{
+  0%  {transform:rotate(0deg) translateX(0)}
+  35% {transform:rotate(-20deg) translateX(-16px)}
+  65% {transform:rotate(4deg) translateX(4px)}
+  100%{transform:rotate(0deg) translateX(0)}
+}
+#mImg{
+  width:100%;height:100%;object-fit:contain;
+  /* Flip miner to face LEFT (toward the rock) */
+  transform:scaleX(-1);
+}
+
+/* ── PARTICLES ───────────────────────── */
+#ptcls{position:absolute;inset:0;pointer-events:none;z-index:15}
+
+.pt{
+  position:absolute;pointer-events:none;border-radius:50%;
+  animation:ptFly linear forwards;
+}
+@keyframes ptFly{
+  0%  {opacity:.9;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.1)}
+}
+
+.orePop{
+  position:absolute;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  animation:oPop 2s ease-out forwards;z-index:20;
+}
+.orePop img{
+  width:44px;height:44px;object-fit:contain;image-rendering:pixelated;
+  filter:drop-shadow(0 0 10px var(--glow));
+}
+.oPopLbl{
+  font-size:12px;font-weight:700;color:var(--glow);
+  text-shadow:0 0 8px var(--glow);
+  background:rgba(0,0,0,.78);padding:2px 8px;
+  border-radius:5px;border:1px solid rgba(255,255,255,.12);
+  font-family:'Rajdhani',sans-serif;letter-spacing:.5px;
+}
+@keyframes oPop{
+  0%  {opacity:0;transform:translate(var(--ox),var(--oy)) scale(.4)}
+  12% {opacity:1;transform:translate(var(--ox),calc(var(--oy) - 8px)) scale(1.2)}
+  65% {opacity:1;transform:translate(var(--ox),calc(var(--oy) - 32px)) scale(1)}
+  100%{opacity:0;transform:translate(var(--ox),calc(var(--oy) - 72px)) scale(.8)}
+}
+
+.dmgN{
+  position:absolute;pointer-events:none;
+  font-size:15px;font-weight:700;
+  color:#ffdd44;text-shadow:0 0 6px #ff8800,1px 1px 0 #000;
+  animation:dmgUp .9s ease-out forwards;z-index:20;
+  font-family:'Rajdhani',sans-serif;
+}
+@keyframes dmgUp{
+  0%  {opacity:1;transform:translate(-50%,0)}
+  100%{opacity:0;transform:translate(-50%,-52px)}
+}
+
+#bNotif{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-size:17px;font-weight:700;color:#ffee88;
+  text-shadow:0 0 10px #ff8800;
+  pointer-events:none;z-index:25;opacity:0;white-space:nowrap;
+  font-family:'Rajdhani',sans-serif;letter-spacing:1px;
+}
+#bNotif.pop{animation:bPop 1.5s ease-out forwards}
+@keyframes bPop{
+  0%  {opacity:0;transform:translateX(-50%) scale(.7) translateY(6px)}
+  14% {opacity:1;transform:translateX(-50%) scale(1.1) translateY(-5px)}
+  65% {opacity:1;transform:translateX(-50%) scale(1) translateY(-5px)}
+  100%{opacity:0;transform:translateX(-50%) scale(.9) translateY(-18px)}
+}
+
+.dust{
+  position:absolute;border-radius:50%;
+  background:rgba(200,160,80,.1);
+  pointer-events:none;
+  animation:dustRise linear both;
+}
+@keyframes dustRise{
+  0%  {opacity:0;transform:translateY(0)}
+  15% {opacity:.7}
+  85% {opacity:.3}
+  100%{opacity:0;transform:translateY(-140px)}
+}
+
+/* ── PRESTIGE MODAL ──────────────────── */
+#pOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.9);
+  z-index:100;display:none;align-items:center;justify-content:center;
+}
+#pOverlay.open{display:flex}
+.pModal{
+  background:linear-gradient(135deg,#1e0838,#100524);
+  border:2px solid #8040c0;border-radius:16px;
+  padding:32px 40px;text-align:center;max-width:380px;
+  box-shadow:0 0 60px rgba(140,60,220,.45),0 0 120px rgba(100,40,180,.2);
+}
+.pModal h2{
+  font-family:'Black Ops One',sans-serif;font-size:24px;
+  color:#e0a0ff;text-shadow:0 0 15px #c060ff;
+  margin-bottom:12px;letter-spacing:2px;
+}
+.pModal p{color:#c090e0;font-size:13px;line-height:1.7;margin-bottom:4px}
+.pModal .warn{color:#ff8080;font-size:12px;margin:10px 0}
+.pModal .note{color:#7060a0;font-size:11px}
+.mBtns{display:flex;gap:14px;justify-content:center;margin-top:20px}
+.bCfm{
+  background:linear-gradient(135deg,#7a20c0,#5010a0);
+  color:#e0c0ff;border:1px solid #a050e0;
+  padding:10px 22px;border-radius:8px;cursor:pointer;
+  font-size:14px;font-weight:700;transition:all .2s;
+  font-family:'Rajdhani',sans-serif;letter-spacing:1px;
+}
+.bCfm:hover{background:linear-gradient(135deg,#9030d8,#6820b8);transform:scale(1.05)}
+.bCnc{
+  background:rgba(60,30,80,.6);color:#a090b0;
+  border:1px solid #5a3060;padding:10px 22px;
+  border-radius:8px;cursor:pointer;font-size:14px;
+  transition:all .2s;font-family:'Rajdhani',sans-serif;
+}
+.bCnc:hover{background:rgba(80,40,100,.7)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="bar">
+  <div class="gtitle">⛏️ MINE A ZAIN</div>
+  <div class="mwrap">
+    <span class="ico">💰</span>
+    <span id="moneyAmt">$0</span>
+  </div>
+  <div class="pbwrap">
+    <div class="pmults">
+      <span class="mtag">💰 ×<span id="cMult">1.00</span></span>
+      <span class="mtag">⚔️ ×<span id="powMult">1.00</span></span>
+      <span class="mtag" style="color:#ffd700">⭐ Prestige <span id="pLvl">0</span></span>
+    </div>
+    <div class="ptrack"><div id="pFill"></div></div>
+    <div id="pReqTxt">Earn $5,000 to prestige</div>
+  </div>
+  <button id="pBtn" onclick="openPrestige()" disabled>⭐ PRESTIGE</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT: INVENTORY -->
+  <div class="panel" id="lp">
+    <div class="ptitle">🎒 INVENTORY</div>
+    <div id="oreList" style="display:flex;flex-direction:column;gap:5px"></div>
+    <div class="invFoot">
+      <button id="sellAllBtn" onclick="sellAll()">💰 SELL ALL</button>
+      <div class="invTotal" id="invTotal">Total value: $0</div>
+    </div>
+  </div>
+
+  <!-- CENTER: CAVE -->
+  <div id="cave">
+    <div id="ceiling"></div>
+    <div id="stalactites"></div>
+    <div id="gnd"></div>
+    <div id="bNotif"></div>
+
+    <div id="scene">
+      <!-- Rock on LEFT, Miner on RIGHT -->
+      <div id="rWrap">
+        <div id="hpBox">
+          <div class="hpLbl" id="hpLbl">HP</div>
+          <div class="hpTrack"><div id="hpFill"></div></div>
+        </div>
+        <img id="rImg" src="" alt="Rock">
+        <div id="rName"></div>
+        <div id="rTier"></div>
+      </div>
+      <div id="mWrap">
+        <img id="mImg" src="https://i.imgur.com/I0ZcYpW.jpeg" alt="Miner">
+      </div>
+    </div>
+
+    <div id="ptcls"></div>
+  </div>
+
+  <!-- RIGHT: SHOP -->
+  <div class="panel" id="rp">
+    <div class="ptitle">🏪 SHOP</div>
+    <div class="shopStats">
+      ⚔️ Power: <strong id="sPow">1.00</strong><br>
+      ⚡ Speed: <strong id="sSpd">1.00</strong>/s<br>
+      🍀 Luck:&nbsp; <strong id="sLck">0</strong> / 20
+    </div>
+    <div class="upgCard">
+      <div class="upgName">⚔️ Mine Power</div>
+      <div class="upgDesc">Deals more damage per swing</div>
+      <div class="upgLvl">Level <span id="uPowLv">0</span></div>
+      <div class="upgRow">
+        <div class="upgCost">💰 <span id="uPowCst">$50</span></div>
+        <button class="buyBtn" id="bPow" onclick="buyUpg('power')">BUY</button>
+      </div>
+    </div>
+    <div class="upgCard">
+      <div class="upgName">⚡ Mine Speed</div>
+      <div class="upgDesc">Swings faster per second</div>
+      <div class="upgLvl">Level <span id="uSpdLv">0</span></div>
+      <div class="upgRow">
+        <div class="upgCost">💰 <span id="uSpdCst">$75</span></div>
+        <button class="buyBtn" id="bSpd" onclick="buyUpg('speed')">BUY</button>
+      </div>
+    </div>
+    <div class="upgCard">
+      <div class="upgName">🍀 Rock Luck</div>
+      <div class="upgDesc">Better rocks spawn more often (capped)</div>
+      <div class="upgLvl">Level <span id="uLckLv">0</span> / 20</div>
+      <div class="upgRow">
+        <div class="upgCost">💰 <span id="uLckCst">$200</span></div>
+        <button class="buyBtn" id="bLck" onclick="buyUpg('luck')">BUY</button>
+      </div>
+    </div>
+    <div class="pHint">
+      <b>⭐ Prestige</b><br>
+      Sacrifice upgrades &amp; ores for:<br>
+      • 💰 +50% ore sell value forever<br>
+      • ⚔️ +25% mine power forever
+    </div>
+  </div>
+
+</div>
+
+<!-- PRESTIGE MODAL -->
+<div id="pOverlay">
+  <div class="pModal">
+    <h2>✨ PRESTIGE ✨</h2>
+    <p>Sacrifice your progress for eternal power.</p>
+    <p id="pRewards" style="margin-top:8px;color:#e0b0ff;font-size:14px;font-weight:700"></p>
+    <p class="warn">⚠️ All upgrades &amp; inventory will be lost!</p>
+    <p class="note">Your coins are kept — and you'll earn them faster.</p>
+    <div class="mBtns">
+      <button class="bCfm" onclick="doPrestige()">✨ PRESTIGE!</button>
+      <button class="bCnc" onclick="closePrestige()">Not yet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const ROCKS = [
+  {id:'basic',   name:'Basic Rock',      tier:'Common',    img:'https://i.imgur.com/Jrj2P2n.png', hp:10,  col:'#8a7a6a'},
+  {id:'boulder', name:'Boulder',          tier:'Uncommon',  img:'https://i.imgur.com/8G74vA5.png', hp:35,  col:'#6a7090'},
+  {id:'magma',   name:'Magma Rock',       tier:'Rare',      img:'https://i.imgur.com/nlcLIfT.png', hp:100, col:'#c04020'},
+  {id:'crystal', name:'Crystal Rock',     tier:'Epic',      img:'https://i.imgur.com/52aUcvf.png', hp:260, col:'#4080c0'},
+  {id:'googly',  name:'Googly-Eyed Rock', tier:'Legendary', img:'https://i.imgur.com/CTTHsvp.png', hp:600, col:'#a040c0'},
+];
+
+const TIER_COL = {
+  Common:'#b0a080', Uncommon:'#60c030',
+  Rare:'#4488ff',   Epic:'#c040ff', Legendary:'#ffaa10'
+};
+
+const ORES = [
+  {id:'copper',  name:'Copper',       img:'https://i.imgur.com/0BM79l0.png', val:5,     glow:'#e09050'},
+  {id:'iron',    name:'Iron',         img:'https://i.imgur.com/dTi8OGe.png', val:20,    glow:'#c0c0d0'},
+  {id:'gold',    name:'Gold',         img:'https://i.imgur.com/5nCCfM7.png', val:75,    glow:'#ffe040'},
+  {id:'emerald', name:'Emerald',      img:'https://i.imgur.com/k1u4SjD.png', val:300,   glow:'#40ff60'},
+  {id:'diamond', name:'Diamond',      img:'https://i.imgur.com/QZMC6kx.png', val:1500,  glow:'#a0f8ff'},
+  {id:'gem',     name:'Ethereal Gem', img:'https://i.imgur.com/tuStRTK.png', val:15000, glow:'#f0a0ff'},
+];
+
+// Drop weight tables per rock type [copper,iron,gold,emerald,diamond,gem]
+const DTABLE = {
+  basic:   [600, 250, 100,  35,  12,   3],
+  boulder: [475, 270, 155,  65,  25,  10],
+  magma:   [330, 285, 215, 110,  45,  15],
+  crystal: [175, 225, 265, 195, 100,  40],
+  googly:  [ 75, 135, 245, 270, 185,  90],
+};
+
+// Rock spawn weights: base (no luck) → max (full luck)
+const BASE_W = [60, 25, 10, 4, 1];
+const MAX_W  = [ 4, 10, 20,32,34];
+const MAX_LUCK = 20;
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const G = {
+  money: 0,
+  earned: 0,          // earned this prestige cycle (for prestige unlock)
+  pLvl:  0,
+  cMult: 1.0,         // cash multiplier
+  powMult: 1.0,       // power multiplier
+  inv: {copper:0, iron:0, gold:0, emerald:0, diamond:0, gem:0},
+  upg: {power:0, speed:0, luck:0},
+  rock: null,         // {data, hp, max}
+  timer: null,
+};
+
+// ═══════════════════════════════════════════
+// COMPUTED STATS
+// ═══════════════════════════════════════════
+const getMinePow = () => (1 + G.upg.power) * G.powMult;
+const getMineSpd = () => Math.min(8, Math.max(0.5, 1 + G.upg.speed * 0.25));
+const getSpawnW  = () => BASE_W.map((b,i) => b + (MAX_W[i]-b) * (G.upg.luck / MAX_LUCK));
+
+function upgCost(t) {
+  const lv = G.upg[t];
+  const b = {power:50, speed:75, luck:200}[t];
+  const s = {power:1.45, speed:1.45, luck:2.0}[t];
+  return Math.floor(b * Math.pow(s, lv));
+}
+
+const pReq = () => Math.floor(5000 * Math.pow(6, G.pLvl));
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function wRnd(w) {
+  const t = w.reduce((a,b) => a+b, 0);
+  let r = Math.random() * t;
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; }
+  return w.length - 1;
+}
+
+function fmt(n) {
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return '$' + (n/1e9).toFixed(2)  + 'B';
+  if (n >= 1e6)  return '$' + (n/1e6).toFixed(2)  + 'M';
+  if (n >= 1e3)  return '$' + (n/1e3).toFixed(1)  + 'K';
+  return '$' + Math.floor(n);
+}
+
+// ═══════════════════════════════════════════
+// ROCK SYSTEM
+// ═══════════════════════════════════════════
+function spawnRock() {
+  const i  = wRnd(getSpawnW());
+  const d  = ROCKS[i];
+  G.rock   = {data:d, hp:d.hp, max:d.hp};
+
+  document.getElementById('rImg').src = d.img;
+  document.getElementById('rName').textContent = d.name;
+
+  const rt = document.getElementById('rTier');
+  rt.textContent = d.tier;
+  rt.style.color = TIER_COL[d.tier];
+
+  updateHp();
+}
+
+function updateHp() {
+  if (!G.rock) return;
+  const pct = Math.max(0, G.rock.hp / G.rock.max) * 100;
+  const f   = document.getElementById('hpFill');
+  f.style.width = pct + '%';
+  f.style.background = pct > 55
+    ? 'linear-gradient(90deg,#28a028,#70f040)'
+    : pct > 25
+    ? 'linear-gradient(90deg,#b08020,#e8c040)'
+    : 'linear-gradient(90deg,#a02020,#e04040)';
+  document.getElementById('hpLbl').textContent =
+    Math.max(0, Math.ceil(G.rock.hp)) + ' / ' + G.rock.max;
+}
+
+// ═══════════════════════════════════════════
+// MINING LOOP
+// ═══════════════════════════════════════════
+function startMining() {
+  if (G.timer) clearInterval(G.timer);
+  G.timer = setInterval(doSwing, Math.round(1000 / getMineSpd()));
+}
+
+function doSwing() {
+  if (!G.rock) return;
+  const pow = getMinePow();
+
+  // Miner swing animation
+  const mw = document.getElementById('mWrap');
+  mw.classList.remove('swing');
+  void mw.offsetWidth;
+  mw.classList.add('swing');
+
+  // Rock shake
+  const rw = document.getElementById('rWrap');
+  rw.classList.remove('shake');
+  void rw.offsetWidth;
+  rw.classList.add('shake');
+
+  G.rock.hp -= pow;
+
+  const pos = getRockPos();
+  spawnHitPts(pos, G.rock.data.col);
+  spawnDmgNum(pos, pow);
+
+  if (G.rock.hp <= 0) breakRock(pos);
+  else updateHp();
+}
+
+function breakRock(pos) {
+  const rock = G.rock;
+  G.rock = null;
+
+  popNotif(rock.data.name);
+  spawnBreakPts(pos, rock.data.col);
+
+  // Roll ore drop
+  const oreIdx = wRnd(DTABLE[rock.data.id]);
+  const ore    = ORES[oreIdx];
+  G.inv[ore.id]++;
+  spawnOrePop(pos, ore);
+
+  setTimeout(spawnRock, 380);
+  updateUI();
+}
+
+// ═══════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════
+function getRockPos() {
+  const rr = document.getElementById('rWrap').getBoundingClientRect();
+  const pr = document.getElementById('ptcls').getBoundingClientRect();
+  return { x: rr.left - pr.left + rr.width/2, y: rr.top - pr.top + rr.height/2 };
+}
+
+function spawnHitPts(pos, col) {
+  const pc = document.getElementById('ptcls');
+  for (let i = 0; i < 8; i++) {
+    const p  = document.createElement('div');
+    p.className = 'pt';
+    const sz = 4 + Math.random() * 7;
+    p.style.cssText =
+      `width:${sz}px;height:${sz}px;background:${col};` +
+      `left:${pos.x}px;top:${pos.y}px;` +
+      `--dx:${(Math.random()-.5)*70}px;` +
+      `--dy:${-10 - Math.random()*50}px;` +
+      `animation-duration:${.22+Math.random()*.22}s`;
+    pc.appendChild(p);
+    setTimeout(() => p.remove(), 560);
+  }
+}
+
+function spawnBreakPts(pos, col) {
+  const pc = document.getElementById('ptcls');
+  for (let i = 0; i < 28; i++) {
+    const p     = document.createElement('div');
+    p.className = 'pt';
+    const sz    = 5 + Math.random() * 14;
+    const ang   = Math.random() * Math.PI * 2;
+    const dist  = 35 + Math.random() * 100;
+    const isRnd = Math.random() > .4;
+    const bgc   = Math.random() > .4 ? col : '#c8b070';
+    p.style.cssText =
+      `width:${sz}px;height:${sz}px;background:${bgc};` +
+      `border-radius:${isRnd?'50%':'3px'};` +
+      `left:${pos.x}px;top:${pos.y}px;` +
+      `--dx:${Math.cos(ang)*dist}px;` +
+      `--dy:${Math.sin(ang)*dist - 35}px;` +
+      `animation-duration:${.4+Math.random()*.55}s`;
+    pc.appendChild(p);
+    setTimeout(() => p.remove(), 1050);
+  }
+}
+
+function spawnOrePop(pos, ore) {
+  const pc = document.getElementById('ptcls');
+  const el = document.createElement('div');
+  el.className = 'orePop';
+  el.style.cssText =
+    `left:${pos.x}px;top:${pos.y}px;` +
+    `--glow:${ore.glow};` +
+    `--ox:${(Math.random()*60-30)}px;` +
+    `--oy:${-(58+Math.random()*22)}px`;
+  el.innerHTML =
+    `<img src="${ore.img}" alt="${ore.name}">` +
+    `<div class="oPopLbl">+ ${ore.name}</div>`;
+  pc.appendChild(el);
+  setTimeout(() => el.remove(), 2100);
+}
+
+function spawnDmgNum(pos, dmg) {
+  const pc = document.getElementById('ptcls');
+  const el = document.createElement('div');
+  el.className = 'dmgN';
+  el.style.cssText =
+    `left:${pos.x + (Math.random()*34-17)}px;` +
+    `top:${pos.y - 22}px`;
+  el.textContent = '-' + Math.ceil(dmg);
+  pc.appendChild(el);
+  setTimeout(() => el.remove(), 960);
+}
+
+function popNotif(name) {
+  const el = document.getElementById('bNotif');
+  el.textContent = '💥 ' + name + ' Shattered!';
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+// ═══════════════════════════════════════════
+// ECONOMY
+// ═══════════════════════════════════════════
+function sellOre(id) {
+  const ore = ORES.find(o => o.id === id);
+  const n   = G.inv[id];
+  if (!n) return;
+  const earned = Math.floor(n * ore.val * G.cMult);
+  G.money  += earned;
+  G.earned += earned;
+  G.inv[id] = 0;
+  updateUI();
+}
+
+function sellAll() {
+  let total = 0;
+  for (const ore of ORES) {
+    total    += Math.floor(G.inv[ore.id] * ore.val * G.cMult);
+    G.inv[ore.id] = 0;
+  }
+  G.money  += total;
+  G.earned += total;
+  updateUI();
+}
+
+// ═══════════════════════════════════════════
+// UPGRADES
+// ═══════════════════════════════════════════
+function buyUpg(t) {
+  if (t === 'luck' && G.upg.luck >= MAX_LUCK) return;
+  const cost = upgCost(t);
+  if (G.money < cost) return;
+  G.money -= cost;
+  G.upg[t]++;
+  if (t === 'speed') startMining();
+  updateUI();
+}
+
+// ═══════════════════════════════════════════
+// PRESTIGE
+// ═══════════════════════════════════════════
+function openPrestige() {
+  if (G.earned < pReq()) return;
+  const nc = (G.cMult * 1.5).toFixed(2);
+  const np = (G.powMult * 1.25).toFixed(2);
+  document.getElementById('pRewards').innerHTML =
+    '💰 ' + nc + '× earnings &nbsp; ⚔️ ' + np + '× power';
+  document.getElementById('pOverlay').classList.add('open');
+}
+
+function closePrestige() {
+  document.getElementById('pOverlay').classList.remove('open');
+}
+
+function doPrestige() {
+  G.pLvl++;
+  G.cMult   *= 1.5;
+  G.powMult *= 1.25;
+  G.upg      = {power:0, speed:0, luck:0};
+  for (const k of Object.keys(G.inv)) G.inv[k] = 0;
+  G.earned   = 0;
+  closePrestige();
+  startMining();
+  spawnRock();
+  updateUI();
+}
+
+// ═══════════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════════
+function updateUI() {
+  // Top bar
+  document.getElementById('moneyAmt').textContent = fmt(G.money);
+  document.getElementById('cMult').textContent    = G.cMult.toFixed(2);
+  document.getElementById('powMult').textContent  = G.powMult.toFixed(2);
+  document.getElementById('pLvl').textContent     = G.pLvl;
+
+  const req  = pReq();
+  const pPct = Math.min(100, G.earned / req * 100);
+  document.getElementById('pFill').style.width = pPct + '%';
+  document.getElementById('pReqTxt').textContent =
+    fmt(G.earned) + ' / ' + fmt(req) + ' to prestige';
+  document.getElementById('pBtn').disabled = G.earned < req;
+
+  // Shop stats
+  document.getElementById('sPow').textContent = getMinePow().toFixed(2);
+  document.getElementById('sSpd').textContent = getMineSpd().toFixed(2);
+  document.getElementById('sLck').textContent = G.upg.luck;
+
+  // Upgrade cards — shared map
+  const KEY = {power:'Pow', speed:'Spd', luck:'Lck'};
+  for (const t of ['power','speed','luck']) {
+    const capped = t === 'luck' && G.upg.luck >= MAX_LUCK;
+    const cost   = upgCost(t);
+    const k      = KEY[t];
+    document.getElementById('u'+k+'Lv').textContent  = G.upg[t];
+    document.getElementById('u'+k+'Cst').textContent = capped ? 'MAX' : fmt(cost);
+    document.getElementById('b'+k).disabled = capped || G.money < cost;
+  }
+
+  // Inventory
+  renderInventory();
+}
+
+function renderInventory() {
+  let html = '', tv = 0;
+  for (const ore of ORES) {
+    const n   = G.inv[ore.id];
+    const sv  = Math.floor(n * ore.val * G.cMult);
+    tv += sv;
+    html +=
+      `<div class="oreRow">` +
+        `<img src="${ore.img}" alt="${ore.name}">` +
+        `<div class="oreMeta">` +
+          `<div class="oreName">${ore.name}</div>` +
+          `<div class="oreQty" style="color:${ore.glow}">${n}</div>` +
+        `</div>` +
+        `<button class="sellBtn" onclick="sellOre('${ore.id}')"${n===0?' disabled':''}>` +
+          `Sell<br>${fmt(sv)}` +
+        `</button>` +
+      `</div>`;
+  }
+  document.getElementById('oreList').innerHTML = html;
+  document.getElementById('invTotal').textContent = 'Total value: ' + fmt(tv);
+}
+
+// ═══════════════════════════════════════════
+// AMBIENT DUST
+// ═══════════════════════════════════════════
+function spawnDust() {
+  const cave = document.getElementById('cave');
+  const el   = document.createElement('div');
+  el.className = 'dust';
+  const sz   = 2 + Math.random() * 4;
+  el.style.cssText =
+    `width:${sz}px;height:${sz}px;` +
+    `left:${Math.random()*100}%;` +
+    `bottom:${60 + Math.random()*120}px;` +
+    `animation-duration:${5+Math.random()*6}s;` +
+    `animation-delay:${Math.random()*2}s`;
+  cave.appendChild(el);
+  setTimeout(() => el.remove(), 13000);
+}
+
+// ═══════════════════════════════════════════
+// STALACTITES
+// ═══════════════════════════════════════════
+function buildStalactites() {
+  const cont = document.getElementById('stalactites');
+  const W    = window.innerWidth;
+  const count = Math.ceil(W / 55);
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    const x = ((i + .5) / count * 100).toFixed(1);
+    const h = 20 + Math.random() * 55;
+    const w = 14 + Math.random() * 22;
+    html +=
+      `<div class="stlct" style="` +
+        `left:${x}%;` +
+        `width:${w}px;height:${h}px;` +
+        `transform:translateX(-50%);` +
+        `opacity:${.6+Math.random()*.4}` +
+      `"></div>`;
+  }
+  cont.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init() {
+  buildStalactites();
+  spawnRock();
+  startMining();
+  updateUI();
+  setInterval(updateUI,  250);
+  setInterval(spawnDust, 1500);
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html></pre>
+        </body>
+    </html>
