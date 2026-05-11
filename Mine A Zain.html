@@ -1,7 +1,4 @@
-<html>
-        <head><title>Downloaded HTML</title></head>
-        <body>
-            <pre style="white-space: pre-wrap; word-wrap: break-word;"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -378,6 +375,37 @@ body{
   transition:all .2s;font-family:'Rajdhani',sans-serif;
 }
 .bCnc:hover{background:rgba(80,40,100,.7)}
+
+/* ── SAVE TOAST ──────────────────────── */
+#saveToast{
+  position:fixed;bottom:14px;right:18px;
+  font-size:11px;font-weight:700;color:#80f080;
+  font-family:'Rajdhani',sans-serif;letter-spacing:.5px;
+  background:rgba(0,0,0,.75);
+  border:1px solid rgba(100,200,100,.25);
+  border-radius:6px;padding:4px 10px;
+  pointer-events:none;opacity:0;z-index:200;
+}
+#saveToast.toastPop{animation:toastFade 2.2s ease-out forwards}
+@keyframes toastFade{
+  0%  {opacity:0;transform:translateY(6px)}
+  15% {opacity:1;transform:translateY(0)}
+  70% {opacity:1}
+  100%{opacity:0}
+}
+
+/* ── DELETE SAVE BUTTON ──────────────── */
+#deleteSaveBtn{
+  position:fixed;bottom:14px;left:18px;
+  font-size:10px;font-weight:700;color:#a06050;
+  font-family:'Rajdhani',sans-serif;letter-spacing:.5px;
+  background:rgba(0,0,0,.6);
+  border:1px solid rgba(160,80,60,.3);
+  border-radius:6px;padding:4px 10px;
+  cursor:pointer;z-index:200;
+  transition:all .2s;
+}
+#deleteSaveBtn:hover{color:#ff8080;border-color:rgba(255,100,80,.5);background:rgba(40,10,10,.8)}
 </style>
 </head>
 <body>
@@ -484,6 +512,10 @@ body{
   </div>
 
 </div>
+
+<!-- SAVE TOAST -->
+<div id="saveToast">💾 Game saved</div>
+<button id="deleteSaveBtn" onclick="deleteSave()">🗑 Delete Save</button>
 
 <!-- PRESTIGE MODAL -->
 <div id="pOverlay">
@@ -668,6 +700,7 @@ function breakRock(pos) {
   const ore    = ORES[oreIdx];
   G.inv[ore.id]++;
   spawnOrePop(pos, ore);
+  saveGame();
 
   setTimeout(spawnRock, 380);
   updateUI();
@@ -768,6 +801,7 @@ function sellOre(id) {
   G.money  += earned;
   G.earned += earned;
   G.inv[id] = 0;
+  saveGame();
   updateUI();
 }
 
@@ -779,6 +813,7 @@ function sellAll() {
   }
   G.money  += total;
   G.earned += total;
+  saveGame();
   updateUI();
 }
 
@@ -792,6 +827,7 @@ function buyUpg(t) {
   G.money -= cost;
   G.upg[t]++;
   if (t === 'speed') startMining();
+  saveGame();
   updateUI();
 }
 
@@ -819,6 +855,7 @@ function doPrestige() {
   for (const k of Object.keys(G.inv)) G.inv[k] = 0;
   G.earned   = 0;
   closePrestige();
+  saveGame();
   startMining();
   spawnRock();
   updateUI();
@@ -925,20 +962,90 @@ function buildStalactites() {
 }
 
 // ═══════════════════════════════════════════
+// SAVE / LOAD  (localStorage)
+// ═══════════════════════════════════════════
+const SAVE_KEY = 'mineAZainSave';
+
+function saveGame() {
+  const data = {
+    money:    G.money,
+    earned:   G.earned,
+    pLvl:     G.pLvl,
+    cMult:    G.cMult,
+    powMult:  G.powMult,
+    inv:      {...G.inv},
+    upg:      {...G.upg},
+  };
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) {
+    console.warn('Save failed:', e);
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (typeof data.money   === 'number') G.money   = data.money;
+    if (typeof data.earned  === 'number') G.earned  = data.earned;
+    if (typeof data.pLvl    === 'number') G.pLvl    = data.pLvl;
+    if (typeof data.cMult   === 'number') G.cMult   = data.cMult;
+    if (typeof data.powMult === 'number') G.powMult = data.powMult;
+    if (data.inv && typeof data.inv === 'object') {
+      for (const k of Object.keys(G.inv)) {
+        if (typeof data.inv[k] === 'number') G.inv[k] = data.inv[k];
+      }
+    }
+    if (data.upg && typeof data.upg === 'object') {
+      for (const k of Object.keys(G.upg)) {
+        if (typeof data.upg[k] === 'number') G.upg[k] = data.upg[k];
+      }
+    }
+  } catch(e) {
+    console.warn('Load failed:', e);
+  }
+}
+
+function deleteSave() {
+  if (!confirm('Delete your save and start fresh?')) return;
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  // Reset state
+  G.money = 0; G.earned = 0; G.pLvl = 0; G.cMult = 1; G.powMult = 1;
+  G.upg = {power:0, speed:0, luck:0};
+  for (const k of Object.keys(G.inv)) G.inv[k] = 0;
+  startMining();
+  spawnRock();
+  updateUI();
+  showSaveToast('Save deleted — fresh start!', '#ff8080');
+}
+
+function showSaveToast(msg, col) {
+  const el = document.getElementById('saveToast');
+  el.textContent = msg;
+  el.style.color = col || '#80f080';
+  el.classList.remove('toastPop');
+  void el.offsetWidth;
+  el.classList.add('toastPop');
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 function init() {
   buildStalactites();
+  loadGame();          // restore saved state first
   spawnRock();
   startMining();
   updateUI();
   setInterval(updateUI,  250);
   setInterval(spawnDust, 1500);
+  setInterval(() => { saveGame(); showSaveToast('Game saved'); }, 15000); // autosave every 15s
 }
 
 window.addEventListener('load', init);
+window.addEventListener('beforeunload', saveGame);
 </script>
 </body>
-</html></pre>
-        </body>
-    </html>
+</html>
