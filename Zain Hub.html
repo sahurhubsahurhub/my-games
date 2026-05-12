@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zain Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080c10;
+      --bg2: #0d1117;
+      --panel: #111820;
+      --border: #1e2d3d;
+      --accent: #00f5ff;
+      --accent2: #ff006e;
+      --text: #c9d8e8;
+      --muted: #4a6070;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0,245,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 32px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-shadow: 0 0 12px #00f5ff88, 0 0 30px #00f5ff33;
+      animation: flicker 8s infinite;
+    }
+    .logo span { color: var(--accent2); text-shadow: 0 0 12px #ff006e88; }
+    .tagline {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: var(--muted);
+      letter-spacing: 0.3em;
+      margin-top: 6px;
+    }
+    @keyframes flicker {
+      0%,94%,100%{opacity:1}95%{opacity:.6}96%{opacity:1}97%{opacity:.4}98%{opacity:1}
+    }
+
+    .grid-wrap {
+      position: relative;
+      z-index: 10;
+      padding: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .game-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .game-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 0 16px rgba(0,245,255,0.15);
+    }
+    .game-card.no-url { opacity: 0.4; cursor: default; }
+    .game-card.no-url:hover { transform: none; border-color: var(--border); box-shadow: none; }
+    .game-thumb {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .game-info { padding: 12px; }
+    .game-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .game-sub {
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .game-sub.ready { color: #00ff88; }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: var(--bg);
+      flex-direction: column;
+    }
+    #overlay.active { display: flex; }
+    #overlay-bar {
+      height: 44px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #overlay-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.38rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+    }
+    #overlay-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    #close-btn {
+      margin-left: auto;
+      padding: 5px 14px;
+      border: 1px solid var(--accent2);
+      border-radius: 3px;
+      background: transparent;
+      color: var(--accent2);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #close-btn:hover { background: var(--accent2); color: #fff; }
+    #gameFrame { flex: 1; width: 100%; border: none; }
+
+    #loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(8,12,16,0.92);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    #loading.active { display: flex; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ZAIN <span>HUB</span></div>
+  <div class="tagline">// made by Triple T Productions //</div>
+</header>
+
+<div class="grid-wrap" id="grid"></div>
+
+<div id="overlay">
+  <div id="overlay-bar">
+    <span id="overlay-label">NOW PLAYING</span>
+    <span id="overlay-title"></span>
+    <button id="close-btn" onclick="closeGame()">✕ EXIT</button>
+  </div>
+  <iframe id="gameFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">LOADING GAME...</div>
+</div>
+
+<script>
+  // ============================================================
+  //  ADD YOUR GAMES HERE
+  //  - name:  what shows on the card
+  //  - url:   your cdn.jsdelivr.net link
+  //  - icon:  emoji or symbol shown if no thumbnail
+  //  - thumb: imgur image URL for the card thumbnail (optional)
+  //
+  //  To add a new game, copy any { } block, paste it below
+  //  the last one (before the ];), and fill in your details.
+  // ============================================================
+  const games = [
+    { name: "Steal A Zainrot",      url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Steal%20A%20Zainrot.html",      icon: "▶", thumb: "https://i.imgur.com/e9y4Ash.jpeg" },
+    { name: "Grow A Zain",          url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Grow%20A%20Zain.html",          icon: "◆", thumb: "https://i.imgur.com/d264FTp.jpeg" },
+    { name: "Roll A Zain",          url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Roll%20A%20Zain.html",          icon: "★", thumb: "https://i.imgur.com/lzJPV7K.jpeg" },
+    { name: "Zain Aura Clicker",    url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Aura%20Clicker.html",    icon: "◉", thumb: "https://i.imgur.com/h4S7w2z.png"  },
+    { name: "Zain Idle RPG",        url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Idle%20RPG.html",        icon: "▲", thumb: "https://i.imgur.com/u8hdwNg.png"  },
+    { name: "Zain Baldy Boy Clicker",url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Baldy%20Boy%20Clicker.html", icon: "⬡", thumb: "https://i.imgur.com/HMPe0Qq.png" },
+    { name: "Zoki Zoki",            url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zoki%20Zoki.html",            icon: "⬡", thumb: "https://i.imgur.com/wzmEMpM.png"  },
+    { name: "Mine A Zain",            url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Mine%20A%20Zain.html",            icon: "⬡", thumb: "https://i.imgur.com/ynN6Ou3.jpeg"  },
+  ];
+  // ============================================================
+
+  function buildGrid() {
+    const grid = document.getElementById('grid');
+    games.forEach((game) => {
+      const hasUrl = game.url.trim() !== '';
+      const card = document.createElement('div');
+      card.className = 'game-card' + (hasUrl ? '' : ' no-url');
+      card.innerHTML = `
+        <div class="game-thumb">
+          ${game.thumb
+            ? `<img src="${game.thumb}" alt="${game.name}" onerror="this.parentElement.innerHTML='${game.icon || '▶'}'"/>`
+            : (game.icon || '▶')}
+        </div>
+        <div class="game-info">
+          <div class="game-title">${game.name}</div>
+          <div class="game-sub ${hasUrl ? 'ready' : ''}">${hasUrl ? '● Ready' : '● No URL set'}</div>
+        </div>
+      `;
+      if (hasUrl) card.onclick = () => openGame(game);
+      grid.appendChild(card);
+    });
+  }
+
+  async function openGame(game) {
+    document.getElementById('loading').classList.add('active');
+    try {
+      const response = await fetch(game.url);
+      if (!response.ok) throw new Error('Failed to fetch');
+      let html = await response.text();
+
+      // This script is injected into every game and handles two things:
+      //
+      // 1. SAVING — snapshots localStorage to a hub-controlled key every 30s
+      //    and on page unload, so progress is never lost.
+      //
+      // 2. RESTORING — on load, copies the last snapshot back into localStorage
+      //    so the game picks up exactly where it left off.
+      //
+      // 3. ABOUT:BLANK FIX — intercepts window.open() so games that open a
+      //    new tab render inside an in-page overlay instead, keeping them in
+      //    the same localStorage context. Works for any game automatically.
+      //
+      // No changes needed to game files — this works for any game you add.
+
+      const saveKey = 'zainhub__' + game.name.replace(/\s+/g, '_').toLowerCase();
+
+      const injected = `<scr` + `ipt>(function(){
+  var SAVE_KEY = ${JSON.stringify(saveKey)};
+
+  // ── RESTORE previous save into localStorage ──
+  try {
+    var saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      var snap = JSON.parse(saved);
+      for (var k in snap) {
+        if (!localStorage.getItem(k)) localStorage.setItem(k, snap[k]);
+      }
+    }
+  } catch(e) {}
+
+  // ── SNAPSHOT localStorage into hub save key ──
+  function snapshot() {
+    try {
+      var snap = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        // Don't snapshot other games' save keys
+        if (k && k.indexOf('zainhub__') !== 0) snap[k] = localStorage.getItem(k);
+      }
+      localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
+    } catch(e) {}
+  }
+  setInterval(snapshot, 30000); // every 30 seconds
+  window.addEventListener('beforeunload', snapshot); // and on close
+
+  // ── ABOUT:BLANK FIX ──
+  // Intercepts window.open() so games that open a new tab
+  // render inside an overlay in the same page instead.
+  // This keeps them in the same localStorage context so saves work.
+  var _op = window.open.bind(window);
+  window.open = function(url, name, feat) {
+    if (!url || url === '' || url === 'about:blank') {
+      var ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#000;';
+      var btn = document.createElement('button');
+      btn.textContent = '✕ Close';
+      btn.style.cssText = 'position:absolute;top:8px;right:12px;z-index:10;padding:4px 14px;background:#ff006e;color:#fff;border:none;cursor:pointer;font-size:14px;border-radius:3px;';
+      btn.onclick = function() { ov.remove(); };
+      var fr = document.createElement('iframe');
+      fr.style.cssText = 'width:100%;height:100%;border:none;';
+      fr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals');
+      ov.appendChild(btn);
+      ov.appendChild(fr);
+      document.body.appendChild(ov);
+      var buf = '';
+      return {
+        document: {
+          open:    function()  { buf = ''; },
+          write:   function(s) { buf += s; },
+          writeln: function(s) { buf += s + '\n'; },
+          close:   function()  { fr.srcdoc = buf; }
+        },
+        focus: function() {},
+        close: function() { ov.remove(); }
+      };
+    }
+    return _op(url, name, feat);
+  };
+})();<` + `/script>`;
+
+      if (html.includes('<head>')) {
+        html = html.replace('<head>', '<head>' + injected);
+      } else if (html.includes('<html>')) {
+        html = html.replace('<html>', '<html>' + injected);
+      } else {
+        html = injected + html;
+      }
+
+      document.getElementById('gameFrame').srcdoc = html;
+      document.getElementById('overlay-title').textContent = game.name;
+      document.getElementById('overlay').classList.add('active');
+    } catch(err) {
+      alert('Could not load game. Check that the CDN URL is correct and the file exists.');
+      console.error(err);
+    } finally {
+      document.getElementById('loading').classList.remove('active');
+    }
+  }
+
+  function closeGame() {
+    document.getElementById('gameFrame').srcdoc = '';
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  buildGrid();
+</script>
+</body>
+</html>
