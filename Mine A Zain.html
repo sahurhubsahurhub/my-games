@@ -376,7 +376,77 @@ body{
 }
 .bCnc:hover{background:rgba(80,40,100,.7)}
 
-/* ── SAVE TOAST ──────────────────────── */
+/* ── LAYER SWITCHER ──────────────────── */
+.layerCard{
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:9px;padding:9px 10px;flex-shrink:0;
+}
+.layerBtns{display:flex;gap:6px;margin-bottom:6px}
+.layerBtn{
+  flex:1;padding:6px 4px;border-radius:6px;
+  font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Rajdhani',sans-serif;letter-spacing:.5px;
+  background:rgba(255,255,255,.04);
+  color:#806050;border:1px solid #3a2510;
+  transition:all .2s;
+}
+.layerBtn:hover:not(:disabled){border-color:#7a5020;color:#c09060}
+.layerBtn.layerActive{
+  background:linear-gradient(135deg,#7a5010,#4a3008);
+  color:var(--gold);border-color:#c08020;
+  text-shadow:0 0 6px var(--gold2);
+}
+.layerBtn:disabled:not(.layerActive){opacity:.35;cursor:not-allowed}
+.layerLock{
+  font-size:10px;color:#805040;text-align:center;
+  padding:3px 0;letter-spacing:.5px;
+}
+
+/* ── ORE DIVIDER ─────────────────────── */
+.oreDiv{
+  font-size:10px;font-weight:700;color:#c04040;
+  letter-spacing:1px;text-align:center;
+  padding:5px 0 3px;
+  border-top:1px solid #3a1010;
+  text-shadow:0 0 6px #801010;
+  font-family:'Rajdhani',sans-serif;
+}
+
+/* ── LAYER 2 CAVE THEME ──────────────── */
+#cave.layer2{
+  background:radial-gradient(ellipse at 50% 60%,#200808 0%,#040202 100%);
+}
+#cave.layer2 #ceiling{
+  background:linear-gradient(180deg,#2a0a06 0%,transparent 100%);
+}
+#cave.layer2 #gnd{
+  background:linear-gradient(180deg,#3a1208 0%,#180604 100%);
+  border-top-color:#c03010;
+  box-shadow:0 -4px 30px rgba(200,60,20,.25);
+}
+#cave.layer2 #gnd::before{
+  background:linear-gradient(90deg,transparent,#e04010 30%,#ff6020 50%,#e04010 70%,transparent);
+}
+#cave.layer2 .stlct{
+  background:linear-gradient(180deg,#2a0a06,#180402);
+}
+/* Lava glow pulse at the base */
+#cave.layer2::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:80px;
+  background:linear-gradient(180deg,transparent,rgba(200,40,10,.18));
+  pointer-events:none;z-index:3;
+  animation:lavaGlow 2.5s ease-in-out infinite;
+}
+@keyframes lavaGlow{
+  0%,100%{opacity:.6}
+  50%     {opacity:1}
+}
+/* Layer 2 dust is ember-red */
+#cave.layer2 .dust{
+  background:rgba(220,80,20,.2);
+}
 #saveToast{
   position:fixed;bottom:14px;right:18px;
   font-size:11px;font-weight:700;color:#80f080;
@@ -509,6 +579,20 @@ body{
       • 💰 +50% ore sell value forever<br>
       • ⚔️ +25% mine power forever
     </div>
+
+    <!-- Layer Switcher -->
+    <div class="layerCard">
+      <div class="upgName" style="margin-bottom:6px">🌋 Mine Layer</div>
+      <div class="layerBtns">
+        <button class="layerBtn layerActive" id="layerBtn1" onclick="switchLayer(1)">
+          ⛏️ Layer 1
+        </button>
+        <button class="layerBtn" id="layerBtn2" onclick="switchLayer(2)" disabled>
+          🌋 Layer 2
+        </button>
+      </div>
+      <div id="layerLockMsg" class="layerLock">🔒 Requires 3 Prestiges</div>
+    </div>
   </div>
 
 </div>
@@ -537,40 +621,58 @@ body{
 // DATA
 // ═══════════════════════════════════════════
 
+// layer:1 = standard cave, layer:2 = deep mine
 const ROCKS = [
-  {id:'basic',   name:'Basic Rock',      tier:'Common',    img:'https://i.imgur.com/Jrj2P2n.png', hp:10,  col:'#8a7a6a'},
-  {id:'boulder', name:'Boulder',          tier:'Uncommon',  img:'https://i.imgur.com/8G74vA5.png', hp:35,  col:'#6a7090'},
-  {id:'magma',   name:'Magma Rock',       tier:'Rare',      img:'https://i.imgur.com/nlcLIfT.png', hp:100, col:'#c04020'},
-  {id:'crystal', name:'Crystal Rock',     tier:'Epic',      img:'https://i.imgur.com/52aUcvf.png', hp:260, col:'#4080c0'},
-  {id:'googly',  name:'Googly-Eyed Rock', tier:'Legendary', img:'https://i.imgur.com/CTTHsvp.png', hp:600, col:'#a040c0'},
+  {id:'basic',    name:'Basic Rock',       tier:'Common',    layer:1, img:'https://i.imgur.com/Jrj2P2n.png', hp:10,   col:'#8a7a6a'},
+  {id:'boulder',  name:'Boulder',           tier:'Uncommon',  layer:1, img:'https://i.imgur.com/8G74vA5.png', hp:35,   col:'#6a7090'},
+  {id:'magma',    name:'Magma Rock',        tier:'Rare',      layer:1, img:'https://i.imgur.com/nlcLIfT.png', hp:100,  col:'#c04020'},
+  {id:'crystal',  name:'Crystal Rock',      tier:'Epic',      layer:1, img:'https://i.imgur.com/52aUcvf.png', hp:260,  col:'#4080c0'},
+  {id:'googly',   name:'Googly-Eyed Rock',  tier:'Legendary', layer:1, img:'https://i.imgur.com/CTTHsvp.png', hp:600,  col:'#a040c0'},
+  // Layer 2 — Deep Mine
+  {id:'obsidian', name:'Obsidian Rock',     tier:'Mythic',    layer:2, img:'https://i.imgur.com/P9Nqu26.png', hp:2000,  col:'#5030c0'},
+  {id:'fiery',    name:'Fiery Core Rock',   tier:'Divine',    layer:2, img:'https://i.imgur.com/oq3I1V0.png', hp:6000,  col:'#e05000'},
+  {id:'plasma',   name:'Plasma Rock',       tier:'Cosmic',    layer:2, img:'https://i.imgur.com/bp77Vmh.png', hp:15000, col:'#00d8e8'},
 ];
 
 const TIER_COL = {
-  Common:'#b0a080', Uncommon:'#60c030',
-  Rare:'#4488ff',   Epic:'#c040ff', Legendary:'#ffaa10'
+  Common:'#b0a080',  Uncommon:'#60c030',
+  Rare:'#4488ff',    Epic:'#c040ff',   Legendary:'#ffaa10',
+  Mythic:'#ff40a0',  Divine:'#ff7020', Cosmic:'#20e8ff'
 };
 
 const ORES = [
-  {id:'copper',  name:'Copper',       img:'https://i.imgur.com/0BM79l0.png', val:5,     glow:'#e09050'},
-  {id:'iron',    name:'Iron',         img:'https://i.imgur.com/dTi8OGe.png', val:20,    glow:'#c0c0d0'},
-  {id:'gold',    name:'Gold',         img:'https://i.imgur.com/5nCCfM7.png', val:75,    glow:'#ffe040'},
-  {id:'emerald', name:'Emerald',      img:'https://i.imgur.com/k1u4SjD.png', val:300,   glow:'#40ff60'},
-  {id:'diamond', name:'Diamond',      img:'https://i.imgur.com/QZMC6kx.png', val:1500,  glow:'#a0f8ff'},
-  {id:'gem',     name:'Ethereal Gem', img:'https://i.imgur.com/tuStRTK.png', val:15000, glow:'#f0a0ff'},
+  // Layer 1 ores (indices 0-5)
+  {id:'copper',  name:'Copper',         img:'https://i.imgur.com/0BM79l0.png', val:5,      glow:'#e09050'},
+  {id:'iron',    name:'Iron',           img:'https://i.imgur.com/dTi8OGe.png', val:20,     glow:'#c0c0d0'},
+  {id:'gold',    name:'Gold',           img:'https://i.imgur.com/5nCCfM7.png', val:75,     glow:'#ffe040'},
+  {id:'emerald', name:'Emerald',        img:'https://i.imgur.com/k1u4SjD.png', val:300,    glow:'#40ff60'},
+  {id:'diamond', name:'Diamond',        img:'https://i.imgur.com/QZMC6kx.png', val:1500,   glow:'#a0f8ff'},
+  {id:'gem',     name:'Ethereal Gem',   img:'https://i.imgur.com/tuStRTK.png', val:15000,  glow:'#f0a0ff'},
+  // Layer 2 ores (indices 6-7)
+  {id:'crimson', name:'Crimson Shard',  img:'https://i.imgur.com/nrQ8Sl9.png', val:75000,  glow:'#ff4060'},
+  {id:'moonlit', name:'Moonlit Crystal',img:'https://i.imgur.com/gXhoO5Y.png', val:500000, glow:'#a0c8ff'},
 ];
 
-// Drop weight tables per rock type [copper,iron,gold,emerald,diamond,gem]
+// Drop weight tables — 8 entries each: [copper,iron,gold,emerald,diamond,gem,crimson,moonlit]
+// Layer 1 rocks have 0 weight on the two new ores
 const DTABLE = {
-  basic:   [600, 250, 100,  35,  12,   3],
-  boulder: [475, 270, 155,  65,  25,  10],
-  magma:   [330, 285, 215, 110,  45,  15],
-  crystal: [175, 225, 265, 195, 100,  40],
-  googly:  [ 75, 135, 245, 270, 185,  90],
+  basic:    [600, 250, 100,  35,  12,   3,    0,    0],
+  boulder:  [475, 270, 155,  65,  25,  10,    0,    0],
+  magma:    [330, 285, 215, 110,  45,  15,    0,    0],
+  crystal:  [175, 225, 265, 195, 100,  40,    0,    0],
+  googly:   [ 75, 135, 245, 270, 185,  90,    0,    0],
+  // Layer 2 — heavily weighted toward new ores
+  obsidian: [ 30,  60,  80,  80,  80,  50,  450,  170],  // sum=1000
+  fiery:    [ 10,  20,  40,  60,  80,  90,  380,  320],  // sum=1000
+  plasma:   [  5,  10,  15,  25,  50,  95,  300,  500],  // sum=1000
 };
 
-// Rock spawn weights: base (no luck) → max (full luck)
+// Layer 1 spawn weights: base (no luck) → max (full luck)
 const BASE_W = [60, 25, 10, 4, 1];
 const MAX_W  = [ 4, 10, 20,32,34];
+// Layer 2 spawn weights: [obsidian, fiery, plasma]
+const L2_BASE_W = [60, 30, 10];
+const L2_MAX_W  = [22, 42, 36];
 const MAX_LUCK = 20;
 
 // ═══════════════════════════════════════════
@@ -578,13 +680,14 @@ const MAX_LUCK = 20;
 // ═══════════════════════════════════════════
 const G = {
   money: 0,
-  earned: 0,          // earned this prestige cycle (for prestige unlock)
+  earned: 0,
   pLvl:  0,
-  cMult: 1.0,         // cash multiplier
-  powMult: 1.0,       // power multiplier
-  inv: {copper:0, iron:0, gold:0, emerald:0, diamond:0, gem:0},
+  cMult: 1.0,
+  powMult: 1.0,
+  layer: 1,
+  inv: {copper:0, iron:0, gold:0, emerald:0, diamond:0, gem:0, crimson:0, moonlit:0},
   upg: {power:0, speed:0, luck:0},
-  rock: null,         // {data, hp, max}
+  rock: null,
   timer: null,
 };
 
@@ -593,7 +696,11 @@ const G = {
 // ═══════════════════════════════════════════
 const getMinePow = () => (1 + G.upg.power) * G.powMult;
 const getMineSpd = () => Math.min(8, Math.max(0.5, 1 + G.upg.speed * 0.25));
-const getSpawnW  = () => BASE_W.map((b,i) => b + (MAX_W[i]-b) * (G.upg.luck / MAX_LUCK));
+const getSpawnW  = () => {
+  const t = G.upg.luck / MAX_LUCK;
+  if (G.layer === 1) return BASE_W.map((b,i) => b + (MAX_W[i]-b)*t);
+  return L2_BASE_W.map((b,i) => b + (L2_MAX_W[i]-b)*t);
+};
 
 function upgCost(t) {
   const lv = G.upg[t];
@@ -626,9 +733,10 @@ function fmt(n) {
 // ROCK SYSTEM
 // ═══════════════════════════════════════════
 function spawnRock() {
-  const i  = wRnd(getSpawnW());
-  const d  = ROCKS[i];
-  G.rock   = {data:d, hp:d.hp, max:d.hp};
+  const pool = ROCKS.filter(r => r.layer === G.layer);
+  const i    = wRnd(getSpawnW());
+  const d    = pool[i];
+  G.rock     = {data:d, hp:d.hp, max:d.hp};
 
   document.getElementById('rImg').src = d.img;
   document.getElementById('rName').textContent = d.name;
@@ -862,8 +970,27 @@ function doPrestige() {
 }
 
 // ═══════════════════════════════════════════
-// UI RENDERING
+// LAYER SWITCHING
 // ═══════════════════════════════════════════
+function switchLayer(n) {
+  if (n === 2 && G.pLvl < 3) return;
+  if (G.layer === n) return;
+  G.layer = n;
+  G.rock  = null;
+
+  const cave = document.getElementById('cave');
+  if (n === 2) {
+    cave.classList.add('layer2');
+  } else {
+    cave.classList.remove('layer2');
+  }
+
+  saveGame();
+  spawnRock();
+  updateUI();
+}
+
+
 function updateUI() {
   // Top bar
   document.getElementById('moneyAmt').textContent = fmt(G.money);
@@ -894,13 +1021,25 @@ function updateUI() {
     document.getElementById('b'+k).disabled = capped || G.money < cost;
   }
 
+  // Layer buttons
+  const l2Unlocked = G.pLvl >= 3;
+  document.getElementById('layerBtn1').classList.toggle('layerActive', G.layer === 1);
+  document.getElementById('layerBtn2').classList.toggle('layerActive', G.layer === 2);
+  document.getElementById('layerBtn2').disabled = !l2Unlocked;
+  document.getElementById('layerLockMsg').style.display = l2Unlocked ? 'none' : 'block';
+
   // Inventory
   renderInventory();
 }
 
 function renderInventory() {
   let html = '', tv = 0;
-  for (const ore of ORES) {
+  for (let idx = 0; idx < ORES.length; idx++) {
+    const ore = ORES[idx];
+    // divider before first L2 ore
+    if (idx === 6) {
+      html += `<div class="oreDiv">🌋 Deep Mine Ores</div>`;
+    }
     const n   = G.inv[ore.id];
     const sv  = Math.floor(n * ore.val * G.cMult);
     tv += sv;
@@ -973,14 +1112,12 @@ function saveGame() {
     pLvl:     G.pLvl,
     cMult:    G.cMult,
     powMult:  G.powMult,
+    layer:    G.layer,
     inv:      {...G.inv},
     upg:      {...G.upg},
   };
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch(e) {
-    console.warn('Save failed:', e);
-  }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }
+  catch(e) { console.warn('Save failed:', e); }
 }
 
 function loadGame() {
@@ -993,6 +1130,7 @@ function loadGame() {
     if (typeof data.pLvl    === 'number') G.pLvl    = data.pLvl;
     if (typeof data.cMult   === 'number') G.cMult   = data.cMult;
     if (typeof data.powMult === 'number') G.powMult = data.powMult;
+    if (typeof data.layer   === 'number') G.layer   = data.layer;
     if (data.inv && typeof data.inv === 'object') {
       for (const k of Object.keys(G.inv)) {
         if (typeof data.inv[k] === 'number') G.inv[k] = data.inv[k];
@@ -1003,9 +1141,7 @@ function loadGame() {
         if (typeof data.upg[k] === 'number') G.upg[k] = data.upg[k];
       }
     }
-  } catch(e) {
-    console.warn('Load failed:', e);
-  }
+  } catch(e) { console.warn('Load failed:', e); }
 }
 
 function deleteSave() {
@@ -1035,13 +1171,14 @@ function showSaveToast(msg, col) {
 // ═══════════════════════════════════════════
 function init() {
   buildStalactites();
-  loadGame();          // restore saved state first
+  loadGame();
+  if (G.layer === 2) document.getElementById('cave').classList.add('layer2');
   spawnRock();
   startMining();
   updateUI();
   setInterval(updateUI,  250);
   setInterval(spawnDust, 1500);
-  setInterval(() => { saveGame(); showSaveToast('Game saved'); }, 15000); // autosave every 15s
+  setInterval(() => { saveGame(); showSaveToast('Game saved'); }, 15000);
 }
 
 window.addEventListener('load', init);
