@@ -276,7 +276,7 @@
   async function openGame(game) {
     document.getElementById('loading').classList.add('active');
     try {
-      const response = await fetch(game.url);
+      const response = await fetch(game.url + '?nocache=' + Date.now());
       if (!response.ok) throw new Error('Failed to fetch');
       let html = await response.text();
 
