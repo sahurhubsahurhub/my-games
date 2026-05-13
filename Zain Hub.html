@@ -232,22 +232,23 @@
   // ============================================================
   //  ADD YOUR GAMES HERE
   //  - name:  what shows on the card
-  //  - url:   your cdn.jsdelivr.net link
+  //  - url:   your cdn.jsdelivr.net link (always use @main!)
   //  - icon:  emoji or symbol shown if no thumbnail
   //  - thumb: imgur image URL for the card thumbnail (optional)
   //
   //  To add a new game, copy any { } block, paste it below
   //  the last one (before the ];), and fill in your details.
+  //  Always use @main in your URL so updates show immediately.
   // ============================================================
   const games = [
-    { name: "Steal A Zainrot",      url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Steal%20A%20Zainrot.html",      icon: "▶", thumb: "https://i.imgur.com/e9y4Ash.jpeg" },
-    { name: "Grow A Zain",          url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Grow%20A%20Zain.html",          icon: "◆", thumb: "https://i.imgur.com/d264FTp.jpeg" },
-    { name: "Roll A Zain",          url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Roll%20A%20Zain.html",          icon: "★", thumb: "https://i.imgur.com/lzJPV7K.jpeg" },
-    { name: "Zain Aura Clicker",    url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Aura%20Clicker.html",    icon: "◉", thumb: "https://i.imgur.com/h4S7w2z.png"  },
-    { name: "Zain Idle RPG",        url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Idle%20RPG.html",        icon: "▲", thumb: "https://i.imgur.com/u8hdwNg.png"  },
-    { name: "Zain Baldy Boy Clicker",url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zain%20Baldy%20Boy%20Clicker.html", icon: "⬡", thumb: "https://i.imgur.com/HMPe0Qq.png" },
-    { name: "Zoki Zoki",            url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games/Zoki%20Zoki.html",            icon: "⬡", thumb: "https://i.imgur.com/wzmEMpM.png"  },
-    { name: "Mine A Zain",            url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Mine%20A%20Zain.html",            icon: "⬡", thumb: "https://i.imgur.com/ynN6Ou3.jpeg"  },
+    { name: "Steal A Zainrot",       url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Steal%20A%20Zainrot.html",       icon: "▶", thumb: "https://i.imgur.com/e9y4Ash.jpeg" },
+    { name: "Grow A Zain",           url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Grow%20A%20Zain.html",           icon: "◆", thumb: "https://i.imgur.com/d264FTp.jpeg" },
+    { name: "Roll A Zain",           url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Roll%20A%20Zain.html",           icon: "★", thumb: "https://i.imgur.com/lzJPV7K.jpeg" },
+    { name: "Zain Aura Clicker",     url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Zain%20Aura%20Clicker.html",     icon: "◉", thumb: "https://i.imgur.com/h4S7w2z.png"  },
+    { name: "Zain Idle RPG",         url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Zain%20Idle%20RPG.html",         icon: "▲", thumb: "https://i.imgur.com/u8hdwNg.png"  },
+    { name: "Zain Baldy Boy Clicker",url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Zain%20Baldy%20Boy%20Clicker.html", icon: "⬡", thumb: "https://i.imgur.com/HMPe0Qq.png" },
+    { name: "Zoki Zoki",             url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Zoki%20Zoki.html",             icon: "⬡", thumb: "https://i.imgur.com/wzmEMpM.png"  },
+    { name: "Mine A Zain",           url: "https://cdn.jsdelivr.net/gh/sahurhubsahurhub/my-games@main/Mine%20A%20Zain.html",           icon: "⬡", thumb: "https://i.imgur.com/ynN6Ou3.jpeg"  },
   ];
   // ============================================================
 
@@ -276,23 +277,11 @@
   async function openGame(game) {
     document.getElementById('loading').classList.add('active');
     try {
+      // ?nocache= forces the browser to always fetch fresh from CDN
+      // instead of serving a locally cached old version
       const response = await fetch(game.url + '?nocache=' + Date.now());
       if (!response.ok) throw new Error('Failed to fetch');
       let html = await response.text();
-
-      // This script is injected into every game and handles two things:
-      //
-      // 1. SAVING — snapshots localStorage to a hub-controlled key every 30s
-      //    and on page unload, so progress is never lost.
-      //
-      // 2. RESTORING — on load, copies the last snapshot back into localStorage
-      //    so the game picks up exactly where it left off.
-      //
-      // 3. ABOUT:BLANK FIX — intercepts window.open() so games that open a
-      //    new tab render inside an in-page overlay instead, keeping them in
-      //    the same localStorage context. Works for any game automatically.
-      //
-      // No changes needed to game files — this works for any game you add.
 
       const saveKey = 'zainhub__' + game.name.replace(/\s+/g, '_').toLowerCase();
 
@@ -316,19 +305,15 @@
       var snap = {};
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        // Don't snapshot other games' save keys
         if (k && k.indexOf('zainhub__') !== 0) snap[k] = localStorage.getItem(k);
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
     } catch(e) {}
   }
-  setInterval(snapshot, 30000); // every 30 seconds
-  window.addEventListener('beforeunload', snapshot); // and on close
+  setInterval(snapshot, 30000);
+  window.addEventListener('beforeunload', snapshot);
 
   // ── ABOUT:BLANK FIX ──
-  // Intercepts window.open() so games that open a new tab
-  // render inside an overlay in the same page instead.
-  // This keeps them in the same localStorage context so saves work.
   var _op = window.open.bind(window);
   window.open = function(url, name, feat) {
     if (!url || url === '' || url === 'about:blank') {
