@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge a Zaintor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #060a10; display: flex; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; }
+#mzg { position: relative; width: 100%; max-width: 640px; background: #0d1117; border-radius: 14px; overflow: hidden; color: white; user-select: none; }
+#mz-main { min-height: 700px; overflow-y: auto; }
+#mz-mg  { display:none; position:absolute; inset:0; background:#0d1117; flex-direction:column; align-items:center; justify-content:center; z-index:10; gap:10px; }
+#mz-fz  { display:none; position:absolute; inset:0; background:rgba(0,0,0,.97); align-items:center; justify-content:center; z-index:10; }
+#mz-nt  { position:absolute; top:14px; right:14px; z-index:20; pointer-events:none; }
+button, label { font-family:inherit; }
+.tab { flex:1; padding:10px 2px; background:transparent; border:none; border-bottom:2px solid transparent; color:#374151; font-size:11px; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.tab.on { color:white; border-bottom-color:#60a5fa; }
+.tab:hover:not(.on) { color:#6b7280; }
+@keyframes mz-particle { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--tx),var(--ty)) scale(.15);opacity:0} }
+@keyframes mz-pulse    { 0%{opacity:.4} 100%{opacity:1} }
+@keyframes mz-spin     { to{transform:rotate(360deg)} }
+@keyframes mz-fadein   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@keyframes mz-slideup  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+@keyframes mz-glow     { 0%,100%{box-shadow:0 0 8px 2px #f8717133} 50%{box-shadow:0 0 22px 6px #f8717144} }
+@keyframes mz-rainbow  { 0%{color:#f87171} 16%{color:#fb923c} 33%{color:#fbbf24} 50%{color:#34d399} 66%{color:#60a5fa} 83%{color:#c084fc} 100%{color:#f87171} }
+@keyframes mz-rborder  { 0%{border-color:#f87171} 16%{border-color:#fb923c} 33%{border-color:#fbbf24} 50%{border-color:#34d399} 66%{border-color:#60a5fa} 83%{border-color:#c084fc} 100%{border-color:#f87171} }
+</style>
+</head>
+<body>
+<div id="mzg">
+  <div id="mz-main"></div>
+  <div id="mz-mg"></div>
+  <div id="mz-fz"></div>
+  <div id="mz-nt"></div>
+</div>
+<script>
+// ═══════════════════════════════ CONSTANTS ════════════════════════════════════
+const FUSIONS = [
+  {id:'f1', name:'Poor X Rich',         img:'https://i.imgur.com/UnyMMPV.jpeg',rarity:'common',   cps:.05, color:'#9ca3af',weight:500},
+  {id:'f2', name:'Country X City',      img:'https://i.imgur.com/Z4lZBkk.jpeg',rarity:'common',   cps:.09, color:'#9ca3af',weight:370},
+  {id:'f3', name:'Smart X Dumb',        img:'https://i.imgur.com/O49oLja.jpeg',rarity:'uncommon', cps:.34, color:'#34d399',weight:145},
+  {id:'f4', name:'Land X Sky',          img:'https://i.imgur.com/NmA0gYS.png', rarity:'uncommon', cps:.50, color:'#34d399',weight:105},
+  {id:'f5', name:'Sword X Shield',      img:'https://i.imgur.com/h6TtziN.jpeg',rarity:'rare',     cps:1.20,color:'#60a5fa',weight:58},
+  {id:'f6', name:'Warrior X Mage',      img:'https://i.imgur.com/E2kETek.jpeg',rarity:'rare',     cps:1.85,color:'#60a5fa',weight:38},
+  {id:'f7', name:'Love X Hate',         img:'https://i.imgur.com/6uMgo3t.jpeg',rarity:'epic',     cps:5.00,color:'#c084fc',weight:11},
+  {id:'f8', name:'Chaos X Order',       img:'https://i.imgur.com/jQLpikB.jpeg',rarity:'epic',     cps:7.80,color:'#c084fc',weight:6},
+  {id:'f9', name:'Past X Future',       img:'https://i.imgur.com/P9xmuxR.jpeg',rarity:'legendary',cps:20.0,color:'#fbbf24',weight:1.5},
+  {id:'f10',name:'Justice X Corruption',img:'https://i.imgur.com/sbW27j0.jpeg',rarity:'legendary',cps:30.0,color:'#fbbf24',weight:.8},
+  {id:'f11',name:'Angelic X Demonic',   img:'https://i.imgur.com/nJuOmUp.jpeg',rarity:'mythic',   cps:85.0,color:'#f87171',weight:.18},
+];
+const LEFT_WORDS  = ['Poor','Country','Smart','Land','Sword','Warrior','Love','Chaos','Past','Justice','Angelic'];
+const RIGHT_WORDS = ['Rich','City','Dumb','Sky','Shield','Mage','Hate','Order','Future','Corruption','Demonic'];
+const RC = {common:'#9ca3af',uncommon:'#34d399',rare:'#60a5fa',epic:'#c084fc',legendary:'#fbbf24',mythic:'#f87171'};
+const TIER_ORDER = ['base','bronze','silver','gold','diamond','rainbow'];
+const TIERS = {
+  base:   {label:'',       color:null,      mult:1},
+  bronze: {label:'Bronze', color:'#cd7f32', mult:4},
+  silver: {label:'Silver', color:'#b8b8b8', mult:12},
+  gold:   {label:'Gold',   color:'#ffd700', mult:36},
+  diamond:{label:'Diamond',color:'#67e8f9', mult:100},
+  rainbow:{label:'Rainbow',color:'rainbow', mult:280},
+};
+const RARITY_ORDER = ['mythic','legendary','epic','rare','uncommon','common'];
+const FUSE_TYPES = [
+  {id:'basic',  name:'Basic',  cost:1,  bonus:0,  color:'#60a5fa',desc:'Standard odds'},
+  {id:'rare',   name:'Rare',   cost:10, bonus:4,  color:'#c084fc',desc:'+4 luck'},
+  {id:'premium',name:'Premium',cost:25, bonus:9,  color:'#fbbf24',desc:'+9 luck'},
+  {id:'mythic', name:'Mythic', cost:100,bonus:20, color:'#f87171',desc:'+20 luck'},
+];
+const PSHOP = [
+  {id:'autosell', icon:'🗑️',name:'Common Filter',  desc:'Auto-sell common & uncommon on obtain',   cost:1,max:1},
+  {id:'headstart',icon:'🚀',name:'Head Start',      desc:'+10% minigame start progress per level',  cost:2,max:3},
+  {id:'minibuff', icon:'🎮',name:'Reward Boost',    desc:'Minigame rewards ×1.5 per level',         cost:2,max:3},
+  {id:'skipfuse', icon:'⏩',name:'Instant Fuse',    desc:'Fuse animation skips to result',          cost:3,max:1},
+  {id:'bulkfuse', icon:'✖️',name:'Triple Pull',     desc:'Each fuse activation grants 3 fusions',  cost:5,max:1},
+];
+const DIFFS = [
+  {name:'Easy',     reward:1,zSpd:60, zW:120,sSpd:205,fill:.82,drain:.33,col:'#22c55e'},
+  {name:'Medium',   reward:2,zSpd:120,zW:88, sSpd:238,fill:.60,drain:.54,col:'#84cc16'},
+  {name:'Hard',     reward:3,zSpd:195,zW:66, sSpd:265,fill:.44,drain:.84,col:'#eab308'},
+  {name:'Very Hard',reward:4,zSpd:290,zW:48, sSpd:295,fill:.32,drain:1.22,col:'#f97316'},
+  {name:'Extreme',  reward:5,zSpd:415,zW:34, sSpd:328,fill:.21,drain:1.88,col:'#ef4444'},
+];
+const DW = [50,25,14,7,4];
+
+// ═══════════════════════════════ STATE ════════════════════════════════════════
+function defState() {
+  return {
+    charges:0,
+    inventory:[],
+    equipped:new Array(6).fill(null),
+    maxSlots:6,
+    luckLevel:0, fuseSpeed:0, prestigeLevel:0, prestigeTokens:0,
+    pShop:{autosell:0,headstart:0,minibuff:0,skipfuse:0,bulkfuse:0},
+    selectedFuse:'basic',
+    autoFuse:false,
+    stats:{chargesEarned:0,fusionsGot:0,rarityCt:{},mgPlayed:0,mgWon:0,fuseCt:0,chSpent:0,combineCt:0,sellCt:0,timePlayed:0}
+  };
+}
+function migrate(p) {
+  // old inventory was array of full fusion objects
+  if (p.inventory?.length && p.inventory[0]?.id && !p.inventory[0]?.fusionId) {
+    const ni=[];
+    for (const f of p.inventory) {
+      const s=ni.find(x=>x.fusionId===f.id&&x.tier==='base');
+      if(s) s.count++; else ni.push({fusionId:f.id,tier:'base',count:1});
+    }
+    p.inventory=ni;
+  }
+  // old equipped was full fusion objects
+  if (p.equipped?.length && p.equipped[0]?.id) {
+    p.equipped = p.equipped.map(e=>e?{fusionId:e.id,tier:'base'}:null);
+  }
+  if (p.luck!==undefined && p.luckLevel===undefined) { p.luckLevel=p.luck; delete p.luck; }
+  if (!p.pShop) p.pShop={};
+  if (!p.stats) p.stats={};
+  if (!p.stats.rarityCt) p.stats.rarityCt={};
+  return p;
+}
+function loadGS() {
+  try {
+    const s=localStorage.getItem('maz_v3');
+    if (s) {
+      let p=JSON.parse(s); p=migrate(p);
+      const ms=p.maxSlots||6;
+      if (!Array.isArray(p.equipped)) p.equipped=new Array(ms).fill(null);
+      while (p.equipped.length<ms) p.equipped.push(null);
+      return {...defState(),...p,pShop:{...defState().pShop,...(p.pShop||{})},stats:{...defState().stats,...(p.stats||{}),rarityCt:{...defState().stats.rarityCt,...(p.stats?.rarityCt||{})}}};
+    }
+  } catch(e){}
+  return defState();
+}
+let gs=loadGS();
+let _sessionStart=Date.now();
+function saveGS() {
+  gs.stats.timePlayed=(gs.stats.timePlayed||0)+(Date.now()-_sessionStart);
+  _sessionStart=Date.now();
+  try{localStorage.setItem('maz_v3',JSON.stringify(gs));}catch(e){}
+}
+setInterval(saveGS,3000);
+
+// ═══════════════════════════════ FORMULAS ═════════════════════════════════════
+const getFusion=id=>FUSIONS.find(f=>f.id===id);
+const nextTier=t=>{const i=TIER_ORDER.indexOf(t);return i<TIER_ORDER.length-1?TIER_ORDER[i+1]:null;};
+const tierMult=t=>TIERS[t]?.mult||1;
+const luckCost=()=>Math.floor(15*Math.pow(1.75,gs.luckLevel));
+const speedCost=()=>Math.floor(20*Math.pow(1.80,gs.fuseSpeed));
+const slotCost=()=>Math.floor(100*Math.pow(3.5,gs.maxSlots-6));
+const prestigeCost=()=>Math.floor(500*Math.pow(3.5,gs.prestigeLevel));
+const effectiveLuck=()=>gs.luckLevel+gs.prestigeLevel*2;
+const chargeMult=()=>Math.pow(1.30,gs.prestigeLevel);
+const animSpeedMult=()=>Math.pow(1.20,gs.prestigeLevel)*(1+gs.fuseSpeed*0.15);
+const mgRewardMult=()=>Math.pow(1.5,gs.pShop.minibuff||0)*chargeMult();
+const mgStartProg=()=>0.30+(gs.pShop.headstart||0)*0.10;
+const sellValue=(fusionId,tier)=>{const f=getFusion(fusionId);return f?Math.max(0.1,f.cps*tierMult(tier)*5):0;};
+function rawCPS(){return gs.equipped.reduce((s,e)=>{if(!e)return s;const f=getFusion(e.fusionId);return s+(f?f.cps*tierMult(e.tier):0);},0);}
+const effectiveCPS=()=>rawCPS()*chargeMult();
+function fmt(n){if(n>=1e12)return(n/1e12).toFixed(2)+'T';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toFixed(2);}
+function fmtTime(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24);if(d>0)return`${d}d ${h%24}h`;if(h>0)return`${h}h ${m%60}m`;if(m>0)return`${m}m ${s%60}s`;return`${s}s`;}
+
+// ═══════════════════════════════ INVENTORY ════════════════════════════════════
+const getStack=(fusionId,tier)=>gs.inventory.find(s=>s.fusionId===fusionId&&s.tier===tier);
+function addToInv(fusionId,tier){const s=getStack(fusionId,tier);if(s)s.count++;else gs.inventory.push({fusionId,tier,count:1});}
+function removeFromInv(fusionId,tier,n=1){const s=getStack(fusionId,tier);if(!s)return false;s.count-=n;if(s.count<=0)gs.inventory=gs.inventory.filter(x=>!(x.fusionId===fusionId&&x.tier===tier));return true;}
+function sortedInv(){
+  return [...gs.inventory].sort((a,b)=>{
+    const ta=TIER_ORDER.indexOf(a.tier),tb=TIER_ORDER.indexOf(b.tier);
+    if(ta!==tb)return tb-ta;
+    const fa=getFusion(a.fusionId),fb=getFusion(b.fusionId);
+    const ra=RARITY_ORDER.indexOf(fa?.rarity),rb=RARITY_ORDER.indexOf(fb?.rarity);
+    if(ra!==rb)return ra-rb;
+    return(fa?.name||'').localeCompare(fb?.name||'');
+  });
+}
+
+// ═══════════════════════════════ PICK FUSION ══════════════════════════════════
+function pickFusionWith(luck){
+  const ws=FUSIONS.map(f=>{
+    const ri=RARITY_ORDER.length-1-RARITY_ORDER.indexOf(f.rarity);
+    let w=f.weight;
+    if(f.rarity==='common')w=Math.max(w*Math.pow(0.71,luck),15);
+    else w=w*(1+ri*0.18*luck);
+    return Math.max(w,0.01);
+  });
+  const t=ws.reduce((a,b)=>a+b,0);let r=Math.random()*t;
+  for(let i=0;i<FUSIONS.length;i++){r-=ws[i];if(r<=0)return FUSIONS[i];}
+  return FUSIONS[0];
+}
+
+// ═══════════════════════════════ NOTIFICATION ═════════════════════════════════
+let ntT=null;
+function notif(msg,col='#22c55e'){
+  const el=document.getElementById('mz-nt');if(!el)return;
+  el.innerHTML=`<div style="background:${col}18;border:1px solid ${col}66;color:${col};padding:8px 13px;border-radius:8px;font-size:12px;font-weight:500;animation:mz-fadein .2s ease;max-width:260px;text-align:right;">${msg}</div>`;
+  clearTimeout(ntT);ntT=setTimeout(()=>{if(el)el.innerHTML='';},2800);
+}
+
+// ═══════════════════════════════ PASSIVE LOOP ══════════════════════════════════
+let lastAutoFuse=0, activeTab='fuse';
+setInterval(()=>{
+  const c=effectiveCPS();
+  if(c>0){
+    gs.charges+=c/20;
+    gs.stats.chargesEarned=(gs.stats.chargesEarned||0)+c/20;
+    const el=document.getElementById('mz-ch');
+    if(el)el.textContent=fmt(gs.charges)+'⚡';
+  }
+  if(gs.autoFuse){
+    const now=Date.now();
+    const ft=FUSE_TYPES.find(t=>t.id===gs.selectedFuse)||FUSE_TYPES[0];
+    const bulk=gs.pShop.bulkfuse?3:1;
+    if(now-lastAutoFuse>=1500&&gs.charges>=ft.cost){
+      lastAutoFuse=now;
+      let triggered=false;
+      for(let b=0;b<bulk;b++){
+        if(gs.charges<ft.cost)break;
+        triggered=true;
+        gs.charges-=ft.cost;
+        gs.stats.chSpent=(gs.stats.chSpent||0)+ft.cost;
+        gs.stats.fuseCt=(gs.stats.fuseCt||0)+1;
+        const f=pickFusionWith(effectiveLuck()+ft.bonus);
+        gs.stats.fusionsGot=(gs.stats.fusionsGot||0)+1;
+        gs.stats.rarityCt[f.rarity]=(gs.stats.rarityCt[f.rarity]||0)+1;
+        if(gs.pShop.autosell&&(f.rarity==='common'||f.rarity==='uncommon')){
+          const v=sellValue(f.id,'base');
+          gs.charges+=v;gs.stats.chargesEarned=(gs.stats.chargesEarned||0)+v;
+          gs.stats.sellCt=(gs.stats.sellCt||0)+1;
+        } else {
+          addToInv(f.id,'base');
+        }
+      }
+      if(triggered&&(activeTab==='fuse'||activeTab==='inventory'))renderAll();
+    }
+  }
+},50);
+
+// ═══════════════════════════════ SCREEN ═══════════════════════════════════════
+function showScr(n){
+  document.getElementById('mz-main').style.display=n==='main'?'block':'none';
+  document.getElementById('mz-mg').style.display=n==='mg'?'flex':'none';
+  document.getElementById('mz-fz').style.display=n==='fz'?'flex':'none';
+}
+
+// ═══════════════════════════════ TIER HELPERS ═════════════════════════════════
+function tierColor(tier){return tier==='rainbow'?null:TIERS[tier]?.color||null;}
+function tierBadge(tier){
+  if(tier==='base')return'';
+  if(tier==='rainbow')return`<span style="font-size:9px;font-weight:700;animation:mz-rainbow 1.5s linear infinite;">${TIERS[tier].label}</span>`;
+  return`<span style="font-size:9px;font-weight:700;color:${TIERS[tier].color};">${TIERS[tier].label}</span>`;
+}
+function tierBorderStyle(tier){
+  if(tier==='rainbow')return'animation:mz-rborder 1.5s linear infinite;border-width:1px;border-style:solid;';
+  const c=TIERS[tier]?.color;
+  return c?`border:1px solid ${c}66;`:'border:1px solid #1c2433;';
+}
+
+// ═══════════════════════════════ SLOT HTML ════════════════════════════════════
+function slotHTML(e,i){
+  if(!e)return`<div style="aspect-ratio:1;border-radius:7px;border:1px solid #161b22;background:#0a0e14;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span style="color:#161b22;font-size:16px;">+</span></div>`;
+  const f=getFusion(e.fusionId);if(!f)return'';
+  const tc=tierColor(e.tier);
+  const borderSt=e.tier==='rainbow'?'animation:mz-rborder 1.5s linear infinite;border-width:1.5px;border-style:solid;':'border:1.5px solid '+(tc?tc+'88':f.color+'55')+';';
+  return`<div onclick="unequipSlot(${i})" title="${f.name}${e.tier!=='base'?' ['+TIERS[e.tier].label+']':''} — click to unequip"
+    style="aspect-ratio:1;border-radius:7px;background:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;${borderSt}">
+    <img src="${f.img}" style="width:100%;height:100%;object-fit:cover;opacity:.85;" onerror="this.style.display='none'">
+    <div style="position:absolute;inset:0;background:linear-gradient(transparent 35%,#0d111799);"></div>
+    ${e.tier!=='base'?`<div style="position:absolute;top:2px;right:2px;${e.tier==='rainbow'?'animation:mz-rainbow 1.5s linear infinite;':'color:'+(tc||'white')+';'}font-size:7px;font-weight:700;">${TIERS[e.tier].label[0]}</div>`:''}
+    <div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:6px;color:${tc||f.color};font-weight:500;padding:0 1px;line-height:1.1;">${f.name.replace(' X ','×')}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════ RENDER ALL ═══════════════════════════════════
+function renderAll(){
+  const tabDefs=[
+    {id:'fuse',label:'⚗️ Fuse'+(gs.autoFuse?' ●':'')},
+    {id:'inventory',label:'🎒 Inv'},
+    {id:'upgrades',label:'⬆️ Upgrades'},
+    {id:'stats',label:'📊 Stats'},
+    {id:'shop',label:'🏪 Shop'},
+  ];
+  const tabBar=`<div style="display:flex;border-bottom:1px solid #161b22;padding:0 8px;">${tabDefs.map(t=>`<button class="tab ${activeTab===t.id?'on':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('')}</div>`;
+  const content={fuse:tabFuse,inventory:tabInventory,upgrades:tabUpgrades,stats:tabStats,shop:tabShop}[activeTab]?.();
+
+  document.getElementById('mz-main').innerHTML=`
+    <div style="padding:18px 20px 10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div style="font-size:18px;font-weight:500;">Merge a Zaintor</div>
+          <div style="font-size:10px;color:#374151;">${gs.prestigeLevel>0?`<span style="color:#f87171;">✦P${gs.prestigeLevel}</span> · `:''}Luck Lv.${gs.luckLevel} · Speed Lv.${gs.fuseSpeed}${gs.prestigeTokens>0?` · <span style="color:#fbbf24;">${gs.prestigeTokens}🪙</span>`:''}</div>
+        </div>
+        <div style="display:flex;gap:5px;">
+          <button onclick="doExport()" style="padding:4px 8px;font-size:11px;background:#161b22;border:1px solid #21262d;color:#4b5563;border-radius:6px;cursor:pointer;">Export</button>
+          <label style="padding:4px 8px;font-size:11px;background:#161b22;border:1px solid #21262d;color:#4b5563;border-radius:6px;cursor:pointer;display:inline-block;">Import<input type="file" accept=".json" onchange="doImport(event)" style="display:none;"></label>
+          <button onclick="doReset()" style="padding:4px 8px;font-size:11px;background:#161b22;border:1px solid #21262d;color:#4b5563;border-radius:6px;cursor:pointer;">Reset</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div id="mz-ch" style="font-size:38px;font-weight:500;color:#fbbf24;letter-spacing:-1px;">${fmt(gs.charges)}⚡</div>
+        <div style="font-size:11px;color:#374151;margin-top:1px;">${fmt(effectiveCPS())}/sec ${chargeMult()>1?`<span style="color:#f87171;">(×${chargeMult().toFixed(2)})</span>`:''} · ${gs.equipped.filter(Boolean).length} equipped</div>
+      </div>
+    </div>
+    ${tabBar}
+    <div style="padding:14px 20px 28px;">${content}</div>`;
+  showScr('main');
+}
+function setTab(t){activeTab=t;renderAll();}
+
+// ═══════════════════════════════ TAB: FUSE ════════════════════════════════════
+function tabFuse(){
+  const ft=FUSE_TYPES.find(t=>t.id===gs.selectedFuse)||FUSE_TYPES[0];
+  const canFuse=gs.charges>=ft.cost;
+  const cm=chargeMult();
+
+  // Fuse machine
+  const machine=`
+  <div style="background:#111827;border-radius:14px;border:1px solid #1c2433;padding:18px 12px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="font-size:9px;color:#374151;text-transform:uppercase;letter-spacing:1.5px;">Hector</div>
+        <img src="https://i.imgur.com/915PkA8.png" width="70" height="70" style="object-fit:contain;image-rendering:pixelated;" onerror="this.style.cssText='width:70px;height:70px;background:#1e293b;border-radius:8px;display:block;'">
+        <div style="width:48px;height:4px;background:#1a2540;border-radius:2px;overflow:hidden;"><div style="width:100%;height:100%;background:#3b82f6;animation:mz-pulse 1.5s ease-in-out infinite alternate;"></div></div>
+      </div>
+      <div style="flex:.5;height:2px;background:linear-gradient(90deg,#1d3a6e,#4c6ef5);animation:mz-pulse 1.5s ease-in-out infinite alternate;"></div>
+      <div style="width:60px;height:60px;border-radius:10px;border:2px dashed #1e293b;background:#0d1117;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+        <span style="color:#1e293b;font-size:22px;font-weight:300;">?</span>
+        <div style="position:absolute;inset:-2px;border-radius:10px;border:2px solid transparent;background:conic-gradient(from 0deg,#7c3aed44 0deg,transparent 60deg) border-box;animation:mz-spin 4s linear infinite;pointer-events:none;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;"></div>
+      </div>
+      <div style="flex:.5;height:2px;background:linear-gradient(90deg,#10b98155,#10b981);animation:mz-pulse 1.5s ease-in-out infinite alternate;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="font-size:9px;color:#374151;text-transform:uppercase;letter-spacing:1.5px;">Zain</div>
+        <img src="https://i.imgur.com/7qdZor9.png" width="70" height="70" style="object-fit:contain;image-rendering:pixelated;" onerror="this.style.cssText='width:70px;height:70px;background:#1e293b;border-radius:8px;display:block;'">
+        <div style="width:48px;height:4px;background:#1a2e20;border-radius:2px;overflow:hidden;"><div style="width:100%;height:100%;background:#10b981;animation:mz-pulse 1.5s ease-in-out infinite alternate;"></div></div>
+      </div>
+    </div>
+  </div>`;
+
+  // Fuse type selector
+  const typeSelector=`
+  <div style="margin-bottom:10px;">
+    <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Fuse Type</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      ${FUSE_TYPES.map(t=>`
+        <div onclick="selFuse('${t.id}')" style="padding:8px 6px;border-radius:8px;border:1px solid ${gs.selectedFuse===t.id?t.color+'88':'#1c2433'};background:${gs.selectedFuse===t.id?t.color+'18':'#111827'};cursor:pointer;text-align:center;">
+          <div style="font-size:12px;font-weight:500;color:${t.color};">${t.name}</div>
+          <div style="font-size:10px;color:#374151;margin-top:1px;">${t.cost}⚡</div>
+          <div style="font-size:9px;color:#4b5563;margin-top:1px;">${t.desc}</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+
+  // Action buttons
+  const actions=`
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <button onclick="startMG()" style="flex:1;padding:11px;background:#1d4ed8;border:none;color:white;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;">⚡ Earn Charge</button>
+    <button onclick="doFuse()" ${canFuse?'':'disabled'} style="flex:1;padding:11px;background:${canFuse?ft.color:'#161b22'};border:${canFuse?'none':'1px solid #21262d'};color:${canFuse?'white':'#374151'};border-radius:10px;cursor:${canFuse?'pointer':'not-allowed'};font-size:13px;font-weight:500;opacity:${canFuse?1:.45};">
+      🔮 Fuse${gs.pShop.bulkfuse?` ×3`:''} (${ft.cost}⚡${gs.pShop.bulkfuse?` ×3=`+(ft.cost*3)+'⚡':''})
+    </button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#111827;border:1px solid #1c2433;border-radius:8px;padding:8px 12px;">
+    <div style="flex:1;">
+      <div style="font-size:11px;color:white;font-weight:500;">Auto-Fuse ${gs.autoFuse?`<span style="color:#22c55e;">● ON</span>`:`<span style="color:#374151;">○ OFF</span>`}</div>
+      <div style="font-size:10px;color:#374151;">Uses <span style="color:${ft.color};">${ft.name}</span> fuse every ~1.5s when affordable${gs.pShop.autosell?` · commons auto-sold`:''}</div>
+    </div>
+    <button onclick="toggleAuto()" style="padding:6px 14px;background:${gs.autoFuse?'#14532d':'#161b22'};border:1px solid ${gs.autoFuse?'#22c55e55':'#21262d'};color:${gs.autoFuse?'#22c55e':'#4b5563'};border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;">${gs.autoFuse?'Disable':'Enable'}</button>
+  </div>`;
+
+  // Equipped slots
+  const slots=`
+  <div style="margin-bottom:10px;">
+    <div style="font-size:10px;color:#21262d;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Equipped (${gs.equipped.filter(Boolean).length}/${gs.maxSlots}) <span style="color:#161b22;">— click to unequip</span></div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:6px;">
+      ${gs.equipped.map((e,i)=>slotHTML(e,i)).join('')}
+    </div>
+    ${gs.maxSlots<12?`<button onclick="buySlot()" ${gs.charges>=slotCost()?'':'disabled'} style="width:100%;padding:7px;background:#161b22;border:1px solid ${gs.charges>=slotCost()?'#60a5fa44':'#21262d'};color:${gs.charges>=slotCost()?'#60a5fa':'#374151'};border-radius:7px;cursor:${gs.charges>=slotCost()?'pointer':'not-allowed'};font-size:11px;font-family:inherit;">+ Buy Slot ${gs.maxSlots+1} — ${fmt(slotCost())}⚡</button>`
+    :`<div style="text-align:center;font-size:10px;color:#374151;">Max slots reached (12)</div>`}
+  </div>`;
+
+  return machine+typeSelector+actions+slots;
+}
+
+// ═══════════════════════════════ TAB: INVENTORY ═══════════════════════════════
+function tabInventory(){
+  const inv=sortedInv();
+  const total=inv.reduce((s,x)=>s+x.count,0);
+  if(!inv.length) return`<div style="color:#21262d;text-align:center;padding:40px 0;font-size:13px;">No fusions yet.<br>Activate the fuse machine!</div>`;
+  return`
+  <div style="font-size:10px;color:#374151;margin-bottom:10px;">${inv.length} unique stacks · ${total} total fusions</div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    ${inv.map(stack=>{
+      const f=getFusion(stack.fusionId);if(!f)return'';
+      const t=TIERS[stack.tier];
+      const tc=tierColor(stack.tier);
+      const borderSt=stack.tier==='rainbow'?'animation:mz-rborder 1.5s linear infinite;border-width:1px;border-style:solid;':`border:1px solid ${tc?tc+'55':f.color+'33'};`;
+      const nt=nextTier(stack.tier);
+      const canCombine=stack.count>=2&&nt!==null;
+      const canEquip=gs.equipped.some(e=>e===null);
+      const effCPS=(f.cps*tierMult(stack.tier)*chargeMult()).toFixed(3);
+      const sv=sellValue(stack.fusionId,stack.tier);
+      return`<div style="display:flex;gap:10px;align-items:center;background:#111827;border-radius:10px;padding:10px;${borderSt}">
+        <div style="position:relative;flex-shrink:0;">
+          <img src="${f.img}" style="width:48px;height:48px;border-radius:7px;object-fit:cover;" onerror="this.style.display='none'">
+          ${stack.tier!=='base'?`<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:700;${stack.tier==='rainbow'?'animation:mz-rainbow 1.5s linear infinite;':'color:'+(tc||'white')+';'}white-space:nowrap;">${t.label}</div>`:''}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:5px;">
+            <span style="font-size:12px;font-weight:500;color:white;">${f.name}</span>
+            <span style="font-size:9px;color:${f.color};text-transform:capitalize;">${f.rarity}</span>
+            <span style="margin-left:auto;font-size:13px;font-weight:600;color:${tc||f.color};">×${stack.count}</span>
+          </div>
+          <div style="font-size:10px;color:#4b5563;margin-top:1px;">+${effCPS}/s eff. · Sell: ${fmt(sv)}⚡ each</div>
+          <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;">
+            <button onclick="equipFromInv('${stack.fusionId}','${stack.tier}')" ${canEquip?'':'disabled'} style="padding:4px 9px;font-size:10px;border-radius:5px;background:${canEquip?'#1e3a5f':'#161b22'};border:1px solid ${canEquip?'#60a5fa55':'#21262d'};color:${canEquip?'#60a5fa':'#374151'};cursor:${canEquip?'pointer':'not-allowed'};font-family:inherit;">Equip</button>
+            <button onclick="combineFusion('${stack.fusionId}','${stack.tier}')" ${canCombine?'':'disabled'} style="padding:4px 9px;font-size:10px;border-radius:5px;background:${canCombine?(tc?tc+'22':'#2a1f4a'):'#161b22'};border:1px solid ${canCombine?(tc?tc+'55':'#7c3aed55'):'#21262d'};color:${canCombine?(tc||'#c084fc'):'#374151'};cursor:${canCombine?'pointer':'not-allowed'};font-family:inherit;">${canCombine?`Combine → ${TIERS[nt].label||'Bronze'}`:`Combine (need 2)`}</button>
+            <button onclick="sellFusion('${stack.fusionId}','${stack.tier}')" style="padding:4px 9px;font-size:10px;border-radius:5px;background:#1a0a0a;border:1px solid #ef444433;color:#f87171;cursor:pointer;font-family:inherit;">Sell 1</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════ TAB: UPGRADES ════════════════════════════════
+function tabUpgrades(){
+  const lc=luckCost(),sc=speedCost(),pc=prestigeCost();
+  const cm=chargeMult(),sm=animSpeedMult(),lk=effectiveLuck();
+  const canP=gs.charges>=pc;
+  const pLevel=gs.prestigeLevel;
+
+  function upgCard(accent,icon,title,level,statLine,cost,fn){
+    const can=gs.charges>=cost;
+    return`<div style="background:#111827;border:1px solid ${can?accent+'55':'#1c2433'};border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:7px;">
+      <div style="font-size:9px;color:${accent};text-transform:uppercase;letter-spacing:1.2px;">${icon} ${title}</div>
+      <div style="font-size:20px;font-weight:500;">Lv.${level}</div>
+      <div style="font-size:10px;color:#4b5563;flex:1;line-height:1.5;">${statLine}</div>
+      <button onclick="${fn}()" ${can?'':'disabled'} style="padding:7px;border:1px solid ${can?accent+'55':'#21262d'};border-radius:7px;background:${can?accent+'22':'#161b22'};color:${can?accent:'#374151'};font-size:11px;font-weight:500;cursor:${can?'pointer':'not-allowed'};font-family:inherit;${can?'':'opacity:.4;'}">${fmt(cost)}⚡ to upgrade</button>
+    </div>`;
+  }
+
+  const upgradeCards=`
+  <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">Upgrades</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    ${upgCard('#fbbf24','🍀','Luck',gs.luckLevel,`Eff. luck <b style="color:#fbbf24;">${lk.toFixed(1)}</b> · Rare+ odds ×${(1+lk*0.2).toFixed(2)}<br>Cost ×1.75/level`,lc,'buyLuck')}
+    ${upgCard('#60a5fa','⚡','Fuse Speed',gs.fuseSpeed,`Animation <b style="color:#60a5fa;">×${sm.toFixed(2)}</b> speed<br>Cost ×1.80/level`,sc,'buySpeed')}
+  </div>`;
+
+  const prestigeSection=`
+  <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">Prestige</div>
+  <div style="background:${canP?'#1a0a0a':'#111827'};border:1px solid ${canP?'#f8717166':'#1c2433'};border-radius:12px;padding:14px;${canP?'animation:mz-glow 2.5s ease-in-out infinite;':''}">
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;color:${pLevel>0?'#f87171':'#6b7280'};margin-bottom:6px;">✦ Prestige ${pLevel}</div>
+        ${pLevel>0?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="background:#fbbf2420;border:1px solid #fbbf2440;color:#fbbf24;font-size:10px;padding:2px 7px;border-radius:4px;">Charges ×${cm.toFixed(2)}</span>
+          <span style="background:#34d39920;border:1px solid #34d39940;color:#34d399;font-size:10px;padding:2px 7px;border-radius:4px;">+${pLevel*2} Luck</span>
+          <span style="background:#60a5fa20;border:1px solid #60a5fa40;color:#60a5fa;font-size:10px;padding:2px 7px;border-radius:4px;">Speed ×${Math.pow(1.2,pLevel).toFixed(2)}</span>
+          <span style="background:#fbbf2420;border:1px solid #fbbf2440;color:#fbbf24;font-size:10px;padding:2px 7px;border-radius:4px;">${gs.prestigeTokens} 🪙 tokens</span>
+        </div>`:'<div style="font-size:11px;color:#374151;margin-bottom:8px;">No bonuses yet.</div>'}
+        <div style="font-size:10px;color:#374151;line-height:1.7;">
+          Cost: <span style="color:${canP?'#f87171':'#6b7280'};">${fmt(pc)}⚡</span> · Resets charges, Luck, Speed, and bought slots. Keeps all fusions.<br>
+          Grants: <span style="color:#fbbf24;">×${(cm*1.3).toFixed(2)} charges</span> <span style="color:#34d399;">+2 luck</span> <span style="color:#60a5fa;">×${(Math.pow(1.2,pLevel)*1.2).toFixed(2)} speed</span> <span style="color:#fbbf24;">+2 🪙 tokens</span>
+        </div>
+      </div>
+      <button onclick="doPrestige()" ${canP?'':'disabled'} style="padding:9px 14px;background:${canP?'#f87171':'#161b22'};border:${canP?'none':'1px solid #21262d'};color:${canP?'white':'#374151'};border-radius:9px;cursor:${canP?'pointer':'not-allowed'};font-size:13px;font-weight:500;font-family:inherit;flex-shrink:0;align-self:center;${canP?'':'opacity:.4;'}">✦ Prestige</button>
+    </div>
+  </div>`;
+
+  return upgradeCards+prestigeSection;
+}
+
+// ═══════════════════════════════ TAB: STATS ═══════════════════════════════════
+function tabStats(){
+  const st=gs.stats;
+  const timePlayed=(st.timePlayed||0)+(Date.now()-_sessionStart);
+  const totalInv=gs.inventory.reduce((s,x)=>s+x.count,0);
+  const rc=st.rarityCt||{};
+  const mgWinRate=st.mgPlayed>0?((st.mgWon||0)/st.mgPlayed*100).toFixed(1):'—';
+  function row(label,value,color='white'){return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #161b22;"><span style="font-size:12px;color:#4b5563;">${label}</span><span style="font-size:12px;font-weight:500;color:${color};">${value}</span></div>`;}
+  function section(title,rows){return`<div style="margin-bottom:16px;"><div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">${title}</div><div style="background:#111827;border:1px solid #1c2433;border-radius:10px;padding:0 12px;">${rows}</div></div>`;}
+  return`
+  ${section('General',[
+    row('Time Played',fmtTime(timePlayed),'#60a5fa'),
+    row('Total Charges Earned',fmt(st.chargesEarned||0),'#fbbf24'),
+    row('Current Charges',fmt(gs.charges),'#fbbf24'),
+    row('Charges/sec',fmt(effectiveCPS()),'#34d399'),
+    row('Prestige Level',gs.prestigeLevel>0?`✦ ${gs.prestigeLevel}`:'None',gs.prestigeLevel>0?'#f87171':'#6b7280'),
+    row('Prestige Tokens',gs.prestigeTokens+'🪙','#fbbf24'),
+  ].join(''))}
+  ${section('Fusions',[
+    row('Total Fusions Obtained',st.fusionsGot||0,'#c084fc'),
+    row('In Inventory',totalInv,'#c084fc'),
+    row('Total Fuse Activations',st.fuseCt||0),
+    row('Fusions Sold',st.sellCt||0,'#f87171'),
+    row('Fusions Combined',st.combineCt||0,'#fbbf24'),
+  ].join(''))}
+  ${section('Rarity Breakdown',RARITY_ORDER.map(r=>row(r.charAt(0).toUpperCase()+r.slice(1),rc[r]||0,RC[r])).join(''))}
+  ${section('Minigame',[
+    row('Games Played',st.mgPlayed||0),
+    row('Games Won',st.mgWon||0,'#22c55e'),
+    row('Win Rate',mgWinRate+'%','#22c55e'),
+    row('Charges Spent on Upgrades',fmt(st.chSpent||0),'#f87171'),
+  ].join(''))}
+  ${section('Upgrades',[
+    row('Luck Level',gs.luckLevel),
+    row('Effective Luck',effectiveLuck().toFixed(1),'#fbbf24'),
+    row('Fuse Speed Level',gs.fuseSpeed),
+    row('Animation Speed','×'+animSpeedMult().toFixed(2),'#60a5fa'),
+    row('Equip Slots',gs.maxSlots),
+    row('Charge Multiplier','×'+chargeMult().toFixed(2),'#f87171'),
+  ].join(''))}`;
+}
+
+// ═══════════════════════════════ TAB: SHOP ════════════════════════════════════
+function tabShop(){
+  const ps=gs.pShop||{};
+  return`
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div>
+      <div style="font-size:14px;font-weight:500;color:white;">Prestige Shop</div>
+      <div style="font-size:11px;color:#374151;">Spend prestige tokens on permanent upgrades</div>
+    </div>
+    <div style="font-size:20px;font-weight:600;color:#fbbf24;">${gs.prestigeTokens} 🪙</div>
+  </div>
+  <div style="font-size:10px;color:#374151;margin-bottom:10px;">Tokens are earned by prestiging (2 per prestige) and never reset.</div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    ${PSHOP.map(item=>{
+      const owned=ps[item.id]||0;
+      const maxed=owned>=item.max;
+      const can=!maxed&&gs.prestigeTokens>=item.cost;
+      return`<div style="background:#111827;border:1px solid ${can?'#fbbf2444':maxed?'#22c55e44':'#1c2433'};border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;flex-shrink:0;">${item.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:white;">${item.name} ${item.max>1?`<span style="font-size:10px;color:#4b5563;">${owned}/${item.max}</span>`:''}</div>
+          <div style="font-size:11px;color:#4b5563;margin-top:1px;">${item.desc}</div>
+          ${maxed?`<div style="font-size:10px;color:#22c55e;margin-top:3px;">✓ Active</div>`:''}
+        </div>
+        <button onclick="buyPShop('${item.id}')" ${can?'':'disabled'}
+          style="padding:7px 14px;background:${maxed?'#14532d':can?'#78350f':'#161b22'};border:1px solid ${maxed?'#22c55e44':can?'#fbbf2444':'#21262d'};color:${maxed?'#22c55e':can?'#fbbf24':'#374151'};border-radius:7px;cursor:${can?'pointer':'not-allowed'};font-size:11px;font-weight:500;font-family:inherit;white-space:nowrap;flex-shrink:0;">
+          ${maxed?'Maxed':can?item.cost+'🪙':''+item.cost+'🪙'}
+        </button>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="margin-top:14px;font-size:10px;color:#21262d;line-height:1.7;">
+    Common Filter: auto-sells on obtain + earns sell value.<br>
+    Triple Pull: each fuse activation (manual &amp; auto) grants 3 fusions for the same charge cost.
+  </div>`;
+}
+
+// ═══════════════════════════════ GAME ACTIONS ═════════════════════════════════
+function selFuse(id){gs.selectedFuse=id;renderAll();}
+function toggleAuto(){gs.autoFuse=!gs.autoFuse;saveGS();renderAll();}
+
+function buyLuck(){
+  const cost=luckCost();if(gs.charges<cost){notif(`Need ${fmt(cost)}⚡`,'#ef4444');return;}
+  gs.charges-=cost;gs.stats.chSpent=(gs.stats.chSpent||0)+cost;gs.luckLevel++;saveGS();
+  notif(`🍀 Luck → Lv.${gs.luckLevel} (eff. ${effectiveLuck().toFixed(1)})`, '#fbbf24');renderAll();
+}
+function buySpeed(){
+  const cost=speedCost();if(gs.charges<cost){notif(`Need ${fmt(cost)}⚡`,'#ef4444');return;}
+  gs.charges-=cost;gs.stats.chSpent=(gs.stats.chSpent||0)+cost;gs.fuseSpeed++;saveGS();
+  notif(`⚡ Fuse Speed → Lv.${gs.fuseSpeed} (×${animSpeedMult().toFixed(2)})`, '#60a5fa');renderAll();
+}
+function buySlot(){
+  const cost=slotCost();if(gs.charges<cost){notif(`Need ${fmt(cost)}⚡`,'#ef4444');return;}
+  if(gs.maxSlots>=12){notif('Max slots!','#ef4444');return;}
+  gs.charges-=cost;gs.stats.chSpent=(gs.stats.chSpent||0)+cost;
+  gs.maxSlots++;gs.equipped.push(null);saveGS();
+  notif(`Slot ${gs.maxSlots} unlocked!`,'#60a5fa');renderAll();
+}
+function buyPShop(id){
+  const item=PSHOP.find(x=>x.id===id);if(!item)return;
+  const owned=gs.pShop[id]||0;
+  if(owned>=item.max){notif('Already maxed!','#22c55e');return;}
+  if(gs.prestigeTokens<item.cost){notif(`Need ${item.cost}🪙`,'#ef4444');return;}
+  gs.prestigeTokens-=item.cost;gs.pShop[id]=(gs.pShop[id]||0)+1;saveGS();
+  notif(`${item.name} purchased!`,'#fbbf24');renderAll();
+}
+function equipFromInv(fusionId,tier){
+  const slot=gs.equipped.findIndex(e=>e===null);
+  if(slot===-1){notif('All slots full!','#ef4444');return;}
+  if(!removeFromInv(fusionId,tier)){notif('Not found in inventory','#ef4444');return;}
+  gs.equipped[slot]={fusionId,tier};saveGS();
+  const f=getFusion(fusionId);notif(`${f?.name} equipped!`,tierColor(tier)||f?.color||'#22c55e');renderAll();
+}
+function unequipSlot(i){
+  const e=gs.equipped[i];if(!e)return;
+  gs.equipped[i]=null;addToInv(e.fusionId,e.tier);saveGS();
+  const f=getFusion(e.fusionId);notif(`${f?.name} unequipped`,'#6b7280');renderAll();
+}
+function sellFusion(fusionId,tier){
+  if(!removeFromInv(fusionId,tier)){notif('Not in inventory','#ef4444');return;}
+  const v=sellValue(fusionId,tier);gs.charges+=v;gs.stats.chargesEarned=(gs.stats.chargesEarned||0)+v;
+  gs.stats.sellCt=(gs.stats.sellCt||0)+1;saveGS();
+  notif(`Sold for +${fmt(v)}⚡`,'#f87171');renderAll();
+}
+function combineFusion(fusionId,tier){
+  const stack=getStack(fusionId,tier);
+  if(!stack||stack.count<2){notif('Need 2 to combine!','#ef4444');return;}
+  const nt=nextTier(tier);if(!nt){notif('Already max tier!','#fbbf24');return;}
+  removeFromInv(fusionId,tier,2);addToInv(fusionId,nt);
+  gs.stats.combineCt=(gs.stats.combineCt||0)+1;saveGS();
+  const f=getFusion(fusionId);const tc=tierColor(nt);
+  notif(`${f?.name} → ${TIERS[nt].label}!`,tc||f?.color||'#fbbf24');renderAll();
+}
+function doPrestige(){
+  const cost=prestigeCost(),cm=chargeMult(),sm=Math.pow(1.2,gs.prestigeLevel);
+  if(gs.charges<cost){notif(`Need ${fmt(cost)}⚡`,'#ef4444');return;}
+  const next=gs.prestigeLevel+1;
+  if(!confirm(`Prestige ${next}?\n\nRESETS: charges, Luck Lv.${gs.luckLevel}, Speed Lv.${gs.fuseSpeed}, bought slots (fusions return to inventory)\nKEEPS: inventory, equipped fusions, prestige shop items\n\nGAINS PERMANENTLY:\n• Charge mult: ×${(cm*1.3).toFixed(2)}\n• +2 luck levels (total +${next*2})\n• Speed: ×${(sm*1.2).toFixed(2)}\n• +2 prestige tokens\n\nContinue?`))return;
+  // Return extra-slot fusions to inventory
+  const keep=gs.equipped.slice(0,6);
+  for(const e of gs.equipped.slice(6)){if(e)addToInv(e.fusionId,e.tier);}
+  const inv=gs.inventory,pShop=gs.pShop,stats=gs.stats,prevTokens=gs.prestigeTokens;
+  gs=defState();
+  gs.inventory=inv;gs.equipped=keep;gs.pShop=pShop;gs.stats=stats;
+  gs.prestigeLevel=next;gs.prestigeTokens=prevTokens+2;
+  gs.selectedFuse='basic';
+  saveGS();notif(`✦ Prestige ${next}! +2 tokens`,'#f87171');renderAll();
+}
+
+// ═══════════════════════════════ MINIGAME ═════════════════════════════════════
+let mg={},mgHold=false,mgRaf=null,mgCanvas=null,mgCtx=null,mgClean=null;
+
+function startMG(){
+  const di=DW.reduce((pi,w,i)=>{let r=Math.random()*(DW.reduce((a,b)=>a+b,0));for(let j=0;j<DW.length;j++){r-=DW[j];if(r<=0)return j;}return 0;},0);
+  // reuse wrand-style
+  const t=DW.reduce((a,b)=>a+b,0);let r2=Math.random()*t,di2=0;
+  for(let i=0;i<DW.length;i++){r2-=DW[i];if(r2<=0){di2=i;break;}}
+  const d=DIFFS[di2];
+  mg={diff:d,sliderX:250,zoneX:(500-d.zW)/2,zoneV:d.zSpd*(Math.random()>.5?1:-1),
+      prog:mgStartProg(),ndc:(Math.min(3,500/d.zSpd))*(0.35+Math.random()*.65),done:false,result:null};
+  mgHold=false;
+  gs.stats.mgPlayed=(gs.stats.mgPlayed||0)+1;
+  document.getElementById('mz-mg').innerHTML=`
+    <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Earn Charge Minigame</div>
+    <canvas id="mgc" width="570" height="290" style="border-radius:10px;display:block;touch-action:none;border:1px solid #1c2433;cursor:pointer;"></canvas>
+    <div style="font-size:11px;color:#21262d;margin-top:6px;">Hold to move right · Release to move left</div>`;
+  showScr('mg');
+  mgCanvas=document.getElementById('mgc');mgCtx=mgCanvas.getContext('2d');
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+      this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
+      this.lineTo(x+w,y+h-r);this.arcTo(x+w,y+h,x+w-r,y+h,r);
+      this.lineTo(x+r,y+h);this.arcTo(x,y+h,x,y+h-r,r);
+      this.lineTo(x,y+r);this.arcTo(x,y,x+r,y,r);this.closePath();};
+  }
+  const onUp=()=>{mgHold=false;if(mg.done)finishMG();};
+  const onTE=()=>{mgHold=false;if(mg.done)finishMG();};
+  mgCanvas.addEventListener('mousedown',()=>mgHold=true);
+  mgCanvas.addEventListener('click',()=>{if(mg.done)finishMG();});
+  window.addEventListener('mouseup',onUp);
+  mgCanvas.addEventListener('touchstart',e=>{e.preventDefault();mgHold=true;},{passive:false});
+  window.addEventListener('touchend',onTE);
+  mgClean=()=>{window.removeEventListener('mouseup',onUp);window.removeEventListener('touchend',onTE);};
+  let lt=null;
+  function loop(ts){
+    if(!lt)lt=ts;const dt=Math.min((ts-lt)/1000,.05);lt=ts;
+    if(!mg.done){
+      mg.sliderX+=(mgHold?mg.diff.sSpd:-mg.diff.sSpd)*dt;
+      mg.sliderX=Math.max(0,Math.min(500,mg.sliderX));
+      mg.zoneX+=mg.zoneV*dt;const mz=500-mg.diff.zW;
+      if(mg.zoneX<0){mg.zoneX=0;mg.zoneV=Math.abs(mg.zoneV)*(0.82+Math.random()*.36);}
+      if(mg.zoneX>mz){mg.zoneX=mz;mg.zoneV=-Math.abs(mg.zoneV)*(0.82+Math.random()*.36);}
+      mg.ndc-=dt;
+      if(mg.ndc<=0){mg.zoneV=mg.diff.zSpd*(Math.random()>.5?1:-1)*(0.6+Math.random()*.8);mg.ndc=(Math.min(3,500/mg.diff.zSpd))*(0.25+Math.random()*.75);}
+      const inZ=mg.sliderX>=mg.zoneX&&mg.sliderX<=mg.zoneX+mg.diff.zW;
+      mg.prog+=(inZ?mg.diff.fill:-mg.diff.drain)*dt;mg.prog=Math.max(0,Math.min(1,mg.prog));
+      if(mg.prog>=1){mg.done=true;mg.result='win';}else if(mg.prog<=0){mg.done=true;mg.result='lose';}
+    }
+    drawMG();if(!mg.done)mgRaf=requestAnimationFrame(loop);
+  }
+  mgRaf=requestAnimationFrame(loop);
+}
+function drawMG(){
+  const ctx=mgCtx,bx=55,by=145,BH=15,BW=490;
+  ctx.clearRect(0,0,570,290);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,570,290);
+  const px=15,py=50,pw=21,ph=185;
+  ctx.beginPath();ctx.fillStyle='#161b22';ctx.roundRect(px,py,pw,ph,5);ctx.fill();
+  const fh=mg.prog*ph,cr=Math.round(255*(1-mg.prog)),cg=Math.round(215*mg.prog);
+  ctx.beginPath();ctx.fillStyle=`rgb(${cr},${cg},25)`;ctx.roundRect(px,py+ph-fh,pw,fh,5);ctx.fill();
+  ctx.fillStyle='#21262d';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText('CHARGE',px+pw/2,py-5);
+  const rm=mgRewardMult();
+  if(rm>1){ctx.beginPath();ctx.fillStyle='#f8717120';ctx.roundRect(42,8,95,22,5);ctx.fill();ctx.fillStyle='#f87171';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText(`×${rm.toFixed(2)} reward`,89,23);}
+  const d=mg.diff;
+  ctx.beginPath();ctx.fillStyle=d.col+'22';ctx.roundRect(388,8,166,42,7);ctx.fill();
+  ctx.strokeStyle=d.col+'77';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle=d.col;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText(d.name,471,27);
+  const er=(d.reward*rm).toFixed(rm>1?2:0);
+  ctx.fillStyle='#4b5563';ctx.font='11px sans-serif';ctx.fillText(`+${er} charge${d.reward>1?'s':''}`,471,44);
+  ctx.beginPath();ctx.fillStyle='#161b22';ctx.roundRect(bx,by-BH/2,BW,BH,7);ctx.fill();
+  ctx.beginPath();ctx.fillStyle='#3b82f640';ctx.roundRect(bx+mg.zoneX,by-BH/2,d.zW,BH,4);ctx.fill();
+  ctx.strokeStyle='#60a5faaa';ctx.lineWidth=1.5;ctx.stroke();
+  const inZ=mg.sliderX>=mg.zoneX&&mg.sliderX<=mg.zoneX+d.zW;
+  ctx.beginPath();ctx.arc(bx+mg.sliderX,by,10,0,Math.PI*2);
+  ctx.fillStyle=inZ?'#22c55e':'#f87171';ctx.fill();
+  ctx.strokeStyle=inZ?'#86efacbb':'#fca5a5bb';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#21262d';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Keep the slider in the blue zone',285,216);
+  ctx.fillStyle=mgHold?'#22c55e66':'#f8717166';
+  ctx.fillText(mgHold?'▶ Moving right':'◀ Moving left',285,233);
+  if(mg.done){
+    ctx.fillStyle='rgba(0,0,0,.84)';ctx.fillRect(0,0,570,290);ctx.textAlign='center';
+    if(mg.result==='win'){
+      const earned=(d.reward*rm).toFixed(rm>1?2:0);
+      ctx.fillStyle='#22c55e';ctx.font='bold 26px sans-serif';ctx.fillText(`+${earned} Charge${d.reward>1?'s':''}!`,285,118);
+      if(rm>1){ctx.fillStyle='#f87171';ctx.font='12px sans-serif';ctx.fillText(`(×${rm.toFixed(2)} multiplier)`,285,140);}
+      ctx.fillStyle='#6b7280';ctx.font='14px sans-serif';ctx.fillText('Minigame complete!',285,rm>1?162:148);
+    }else{
+      ctx.fillStyle='#ef4444';ctx.font='bold 26px sans-serif';ctx.fillText('Failed!',285,125);
+      ctx.fillStyle='#6b7280';ctx.font='14px sans-serif';ctx.fillText('Bar depleted — no charges earned.',285,155);
+    }
+    ctx.fillStyle='#374151';ctx.font='11px sans-serif';ctx.fillText('Click or release to continue',285,192);
+  }
+}
+function finishMG(){
+  cancelAnimationFrame(mgRaf);if(mgClean){mgClean();mgClean=null;}
+  if(mg.result==='win'){
+    const rm=mgRewardMult();const earned=mg.diff.reward*rm;
+    gs.charges+=earned;gs.stats.chargesEarned=(gs.stats.chargesEarned||0)+earned;
+    gs.stats.mgWon=(gs.stats.mgWon||0)+1;saveGS();
+    notif(`+${earned.toFixed(rm>1?2:0)} charge${mg.diff.reward>1?'s':''}! (${mg.diff.name})`,mg.diff.col);
+  }else{notif('No charges earned.',RC.common);}
+  renderAll();
+}
+
+// ═══════════════════════════════ FUSING ══════════════════════════════════════
+let fzFusions=[],fzMain=null;
+
+function doFuse(){
+  const ft=FUSE_TYPES.find(t=>t.id===gs.selectedFuse)||FUSE_TYPES[0];
+  if(gs.charges<ft.cost){notif(`Need ${ft.cost}⚡`,'#ef4444');return;}
+  const bulk=gs.pShop.bulkfuse?3:1;
+  if(gs.charges<ft.cost*bulk){notif(`Need ${ft.cost*bulk}⚡ for Triple Pull`,'#ef4444');return;}
+  fzFusions=[];
+  const lk=effectiveLuck()+ft.bonus;
+  for(let i=0;i<bulk;i++){
+    if(gs.charges<ft.cost)break;
+    gs.charges-=ft.cost;gs.stats.chSpent=(gs.stats.chSpent||0)+ft.cost;
+    gs.stats.fuseCt=(gs.stats.fuseCt||0)+1;
+    fzFusions.push(pickFusionWith(lk));
+  }
+  // sort so rarest shows in animation
+  fzFusions.sort((a,b)=>RARITY_ORDER.indexOf(a.rarity)-RARITY_ORDER.indexOf(b.rarity));
+  fzMain=fzFusions[0];
+  saveGS();
+  if(gs.pShop.skipfuse){showFzResult();showScr('fz');}else{startFusing();}
+}
+function setWord(el,text,col){
+  el.innerHTML=`<span style="display:inline-block;color:${col};animation:mz-slideup .22s cubic-bezier(.22,1,.36,1) both;">${text}</span>`;
+}
+function startFusing(){
+  showScr('fz');
+  document.getElementById('mz-fz').innerHTML=`
+    <div style="text-align:center;animation:mz-fadein .3s ease;width:100%;max-width:560px;padding:24px;">
+      <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:2px;margin-bottom:32px;">Activating Fuse Machine...</div>
+      <div style="display:flex;align-items:center;justify-content:center;min-height:60px;">
+        <div id="fz-left"  style="flex:1;text-align:right;font-size:30px;font-weight:500;padding-right:14px;overflow:hidden;"></div>
+        <div style="font-size:28px;font-weight:300;color:#ffffff33;flex-shrink:0;">X</div>
+        <div id="fz-right" style="flex:1;text-align:left;font-size:30px;font-weight:500;padding-left:14px;overflow:hidden;"></div>
+      </div>
+      <div id="fz-ry" style="font-size:11px;min-height:18px;margin-top:10px;text-transform:capitalize;letter-spacing:.5px;"></div>
+    </div>`;
+  const leftEl=document.getElementById('fz-left');
+  const rightEl=document.getElementById('fz-right');
+  const ryEl=document.getElementById('fz-ry');
+  const sm=animSpeedMult();
+  const total=Math.max(5,Math.floor(26/sm))+Math.floor(Math.random()*Math.max(2,Math.floor(14/sm)));
+  const maxDelay=Math.max(40,400/sm),baseDelay=Math.max(20,76/sm);
+  let cnt=0;
+  function flash(){
+    cnt++;const last=cnt>=total;
+    let lw,rw,col;
+    if(last){const p=fzMain.name.split(' X ');lw=p[0];rw=p[1];col=fzMain.color;ryEl.style.color=col+'99';ryEl.textContent=fzMain.rarity;}
+    else{lw=LEFT_WORDS[Math.floor(Math.random()*LEFT_WORDS.length)];rw=RIGHT_WORDS[Math.floor(Math.random()*RIGHT_WORDS.length)];col=Object.values(RC)[Math.floor(Math.random()*6)];ryEl.textContent='';}
+    setWord(leftEl,lw,col);setWord(rightEl,rw,col);
+    if(last){setTimeout(()=>{showFzResult();},Math.max(250,700/sm));return;}
+    setTimeout(flash,baseDelay+Math.pow(cnt/total,1.7)*maxDelay);
+  }
+  flash();
+}
+function showFzResult(){
+  const f=fzMain,c=f.color,parts=f.name.split(' X ');
+  const cm=chargeMult();const isBulk=fzFusions.length>1;
+  document.getElementById('mz-fz').innerHTML=`
+    <div style="text-align:center;position:relative;padding:20px;max-width:500px;width:100%;">
+      <div id="fz-ptc" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:420px;height:420px;pointer-events:none;overflow:hidden;"></div>
+      <div style="position:relative;z-index:2;animation:mz-fadein .4s ease;">
+        <div style="font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">${isBulk?'Triple Pull Results':'You obtained:'}</div>
+        ${isBulk?`
+          <div style="display:flex;justify-content:center;gap:10px;margin-bottom:14px;">
+            ${fzFusions.map(f2=>`
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <img src="${f2.img}" style="width:64px;height:64px;border-radius:9px;object-fit:cover;border:2px solid ${f2.color}66;" onerror="this.style.display='none'">
+                <div style="font-size:9px;color:${f2.color};text-transform:capitalize;">${f2.rarity}</div>
+                <div style="font-size:10px;color:white;font-weight:500;">${f2.name.replace(' X ','×')}</div>
+              </div>`).join('')}
+          </div>`
+        :`
+          <img src="${f.img}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:2px solid ${c}66;margin-bottom:10px;" onerror="this.style.display='none'">
+          <div style="font-size:11px;color:${c};text-transform:capitalize;margin-bottom:3px;">${f.rarity}</div>
+          <div style="font-size:34px;font-weight:500;color:${c};margin-bottom:4px;">${parts[0]} <span style="color:${c}55;font-weight:300;">X</span> ${parts[1]}</div>`}
+        <div style="font-size:11px;color:#374151;margin-bottom:22px;">${isBulk?`${fzFusions.length} fusions added to inventory`:`+${f.cps.toFixed(3)}/s base ${cm>1?`· <span style="color:#f87171;">×${cm.toFixed(2)} eff.</span>`:''}`}</div>
+        <button onclick="claimF()" style="padding:10px 28px;background:${c};border:none;color:white;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;">Claim${isBulk?` ${fzFusions.length} Fusions`:' Fusion'}</button>
+      </div>
+    </div>`;
+  spawnPtc(document.getElementById('fz-ptc'),c);
+}
+function spawnPtc(el,col){
+  if(!el)return;
+  for(let i=0;i<40;i++){
+    const s=3+Math.random()*9,a=Math.random()*Math.PI*2,dist=50+Math.random()*170;
+    const tx=Math.cos(a)*dist,ty=Math.sin(a)*dist,dur=(.6+Math.random()*.9).toFixed(2);
+    const p=document.createElement('div');
+    p.style.cssText=`position:absolute;left:${170+Math.random()*80}px;top:${170+Math.random()*80}px;width:${s}px;height:${s}px;background:${col};border-radius:50%;animation:mz-particle ${dur}s ease-out forwards;--tx:${tx}px;--ty:${ty}px;`;
+    el.appendChild(p);
+  }
+}
+function claimF(){
+  for(const f of fzFusions){
+    gs.stats.fusionsGot=(gs.stats.fusionsGot||0)+1;
+    gs.stats.rarityCt[f.rarity]=(gs.stats.rarityCt[f.rarity]||0)+1;
+    if(gs.pShop.autosell&&(f.rarity==='common'||f.rarity==='uncommon')){
+      const v=sellValue(f.id,'base');gs.charges+=v;
+      gs.stats.chargesEarned=(gs.stats.chargesEarned||0)+v;
+      gs.stats.sellCt=(gs.stats.sellCt||0)+1;
+    }else{addToInv(f.id,'base');}
+  }
+  const f=fzMain;saveGS();
+  notif(fzFusions.length>1?`${fzFusions.length} fusions claimed!`:`${f?.name} claimed!`,f?.color||'#22c55e');
+  fzFusions=[];fzMain=null;renderAll();
+}
+
+// ═══════════════════════════════ SAVE / LOAD ══════════════════════════════════
+function doExport(){
+  const blob=new Blob([JSON.stringify(gs,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='mergeazaintor_save.json';a.click();URL.revokeObjectURL(url);
+}
+function doImport(ev){
+  const file=ev.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      let data=JSON.parse(e.target.result);data=migrate(data);
+      const ms=data.maxSlots||6;
+      if(!Array.isArray(data.equipped))data.equipped=new Array(ms).fill(null);
+      while(data.equipped.length<ms)data.equipped.push(null);
+      gs={...defState(),...data,pShop:{...defState().pShop,...(data.pShop||{})},stats:{...defState().stats,...(data.stats||{}),rarityCt:{...defState().stats.rarityCt,...(data.stats?.rarityCt||{})}}};
+      saveGS();notif('Save imported!','#22c55e');renderAll();
+    }catch{notif('Invalid save file!','#ef4444');}
+  };
+  r.readAsText(file);
+}
+function doReset(){
+  if(!confirm('Reset ALL progress? This cannot be undone.'))return;
+  gs=defState();saveGS();notif('Reset.','#6b7280');renderAll();
+}
+
+// ═══════════════════════════════ INIT ═════════════════════════════════════════
+renderAll();
+</script>
+</body>
+</html>
